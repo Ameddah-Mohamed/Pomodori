@@ -1,0 +1,23 @@
+{
+  "name": "pomodori",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon --watch backend --ext ts,tsx,js,json --exec \"node --loader ts-node/esm --no-warnings=ExperimentalWarning ./backend/server.ts\"",
+    "build": "tsc -p backend/tsconfig.json",
+    "start": "node ./backend/dist/server.js"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "prettier": "^3.6.2"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "dotenv": "^17.2.1"
+  }
+}
