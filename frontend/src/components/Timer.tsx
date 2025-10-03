@@ -1,24 +1,46 @@
 import { useEffect, useState } from "react";
 
+type TimerProps = {
+  duration: number;
+  state: "playing" | "paused";
+}
+
 // working in milliseconds
-export default function Timer({ duration }: { duration: number }) {
+export default function Timer({duration, state}: TimerProps) {
+
   const [time, setTime] = useState(duration);
 
+
+  // Timer Logic
   useEffect(() => {
-    const endtime = Date.now() + duration;
+    let interval: number | undefined;
 
     const tick = () => {
-      let remaining = endtime - Date.now();
-      setTime(Math.max(remaining, 0));
+      setTime((prev)=> Math.max(prev-1000, 0));
     };
+    
+    if (state === "playing"){
+      tick();
+      interval = window.setInterval(tick, 1000);
+      
+    }
 
-    tick(); 
-    const interval = setInterval(tick, 1000);
+    return () => {
+      if(interval !== undefined) clearInterval(interval);
+    };
+  }, [state]);
 
-    return () => clearInterval(interval);
-  }, [duration]);
 
-    const get_formatted_time = (milliseconds: number) => {
+
+  //set the duration to the new value.
+  useEffect(()=>{
+    setTime(duration);
+  }, [duration])
+
+
+  
+  // formatting
+  const get_formatted_time = (milliseconds: number) => {
     let total_seconds = Math.floor(milliseconds / 1000);
     let total_minutes = Math.floor(total_seconds / 60);
     let total_hours = Math.floor(total_minutes / 60);
@@ -35,7 +57,8 @@ export default function Timer({ duration }: { duration: number }) {
     } else {
         return `${pad(minutes)}:${pad(seconds)}`;
     }
-    };
+  };
+
 
   return (
     <>
