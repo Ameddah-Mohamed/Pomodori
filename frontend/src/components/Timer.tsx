@@ -1,68 +1,55 @@
-import { useEffect, useState } from "react";
+// Timer.tsx
+import { useEffect, useRef, useState } from "react";
 
 type TimerProps = {
-  duration: number;
+  duration: number;                  // ms
   state: "playing" | "paused";
-}
+  onComplete?: () => void;           // fires once when countdown hits 0
+};
 
-// working in milliseconds
-export default function Timer({duration, state}: TimerProps) {
-
+export default function Timer({ duration, state, onComplete }: TimerProps) {
   const [time, setTime] = useState(duration);
+  const firedRef = useRef(false);    // ensure onComplete runs once per session
 
-
-  // Timer Logic
+  // Snap to new duration (reset view & completion flag)
   useEffect(() => {
-    let interval: number | undefined;
+    setTime(duration);
+    firedRef.current = false;
+  }, [duration]);
+
+  // Countdown when playing (wall-clock to avoid drift while backgrounded)
+  useEffect(() => {
+    if (state !== "playing") return;
+
+    const endAt = Date.now() + time; // continue from current visible time
+    let id: number | undefined;
 
     const tick = () => {
-      setTime((prev)=> Math.max(prev-1000, 0));
+      const remaining = Math.max(0, endAt - Date.now());
+      setTime(remaining);
+      if (remaining === 0) {
+        if (!firedRef.current) {
+          firedRef.current = true;
+          onComplete?.();
+        }
+        if (id !== undefined) clearInterval(id);
+      }
     };
-    
-    if (state === "playing"){
-      tick();
-      interval = window.setInterval(tick, 1000);
-      
-    }
 
-    return () => {
-      if(interval !== undefined) clearInterval(interval);
-    };
-  }, [state]);
+    tick(); // immediate update
+    id = window.setInterval(tick, 1000);
+    return () => { if (id !== undefined) clearInterval(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]); // do not depend on `time` to avoid re-creating interval every second
 
-
-
-  //set the duration to the new value.
-  useEffect(()=>{
-    setTime(duration);
-  }, [duration])
-
-
-  
-  // formatting
-  const get_formatted_time = (milliseconds: number) => {
-    let total_seconds = Math.floor(milliseconds / 1000);
-    let total_minutes = Math.floor(total_seconds / 60);
-    let total_hours = Math.floor(total_minutes / 60);
-
-    let seconds = total_seconds % 60;
-    let minutes = total_minutes % 60;
-    let hours = total_hours % 24;
-
-    // Pad minutes and seconds with leading zeros (e.g. 05:09)
-    const pad = (num: number) => String(num).padStart(2, "0");
-
-    if (hours > 0) {
-        return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-    } else {
-        return `${pad(minutes)}:${pad(seconds)}`;
-    }
+  const format = (ms: number) => {
+    const totalSec = Math.floor(ms / 1000);
+    const s = totalSec % 60;
+    const m = Math.floor(totalSec / 60) % 60;
+    const h = Math.floor(totalSec / 3600);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
   };
 
-
-  return (
-    <>
-      <div className="text-gray-200 font-bold text-7xl">{get_formatted_time(time)}</div>
-    </>
-  );
+  return <div className="text-gray-200 font-bold text-7xl">{format(time)}</div>;
 }

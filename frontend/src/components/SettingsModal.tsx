@@ -31,6 +31,8 @@ export default function SettingsModal({
   const [shortMin, setShortMin] = useState<number>(initialShortMin);
   const [longMin, setLongMin] = useState<number>(initialLongMin);
 
+  const [sessionCounter, setSessionCounter ] = useState<number>(0);
+
   // open/close native dialog when prop changes
   useEffect(() => {
     const d = dialogRef.current;
