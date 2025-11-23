@@ -36,7 +36,7 @@ export default function Timer({ duration, state, onComplete }: TimerProps) {
       }
     };
 
-    tick(); // immediate update
+    tick(); 
     id = window.setInterval(tick, 1000);
     return () => { if (id !== undefined) clearInterval(id); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
