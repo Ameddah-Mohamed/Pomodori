@@ -44,3 +44,6 @@ coverage/
 # Credentials
 credentials*.json
 *.env
+
+scripts/sync-wallpapers.sh
+scripts/*

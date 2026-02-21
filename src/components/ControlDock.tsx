@@ -1,5 +1,5 @@
 import { Pause, Play, RotateCcw, Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Timer from "./Timer";
 import SettingsModal from "./SettingsModal";
 import usePomodoroEngine from "../hooks/usePomodoroEngine";
@@ -7,11 +7,61 @@ import type { Session } from "../hooks/usePomodoroEngine";
 import useNotificationCenter from "../hooks/useNotificationCenter";
 import useLongPressReset from "../hooks/useLongPressReset";
 import type { Wallpaper } from "../types/wallpaper";
+import usePersistentState from "../hooks/usePersistentState";
 
 type ControlDockProps = {
   wallpapers: Wallpaper[];
   background: string;
   onChangeBackground: (src: string) => void;
+};
+
+type DockCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+type Point = { x: number; y: number };
+const SNAP_MARGIN = 20;
+
+const getCornerPosition = (
+  corner: DockCorner,
+  width: number,
+  height: number
+): Point => {
+  const maxX = Math.max(SNAP_MARGIN, window.innerWidth - width - SNAP_MARGIN);
+  const maxY = Math.max(SNAP_MARGIN, window.innerHeight - height - SNAP_MARGIN);
+  if (corner === "center") {
+    return {
+      x: Math.max(SNAP_MARGIN, Math.round((window.innerWidth - width) / 2)),
+      y: Math.max(SNAP_MARGIN, Math.round((window.innerHeight - height) / 2)),
+    };
+  }
+  if (corner === "top-left") return { x: SNAP_MARGIN, y: SNAP_MARGIN };
+  if (corner === "top-right") return { x: maxX, y: SNAP_MARGIN };
+  if (corner === "bottom-left") return { x: SNAP_MARGIN, y: maxY };
+  return { x: maxX, y: maxY };
+};
+
+const nearestCorner = (point: Point, width: number, height: number): DockCorner => {
+  const corners: DockCorner[] = ["top-left", "top-right", "bottom-left", "bottom-right", "center"];
+  let winner: DockCorner = corners[0];
+  let best = Number.POSITIVE_INFINITY;
+  for (const corner of corners) {
+    const target = getCornerPosition(corner, width, height);
+    const dx = target.x - point.x;
+    const dy = target.y - point.y;
+    const dist = dx * dx + dy * dy;
+    if (dist < best) {
+      best = dist;
+      winner = corner;
+    }
+  }
+  return winner;
+};
+
+const clampPoint = (point: Point, width: number, height: number): Point => {
+  const maxX = Math.max(SNAP_MARGIN, window.innerWidth - width - SNAP_MARGIN);
+  const maxY = Math.max(SNAP_MARGIN, window.innerHeight - height - SNAP_MARGIN);
+  return {
+    x: Math.min(Math.max(point.x, SNAP_MARGIN), maxX),
+    y: Math.min(Math.max(point.y, SNAP_MARGIN), maxY),
+  };
 };
 
 export default function ControlDock({
@@ -36,7 +86,15 @@ export default function ControlDock({
     completeCurrentSession,
     syncRemaining,
   } = usePomodoroEngine();
+  const [dockCorner, setDockCorner] = usePersistentState<DockCorner>(
+    "pomodoro:dockCorner",
+    "bottom-left"
+  );
   const [open, setOpen] = useState(false);
+  const [dockPos, setDockPos] = useState<Point>({ x: SNAP_MARGIN, y: SNAP_MARGIN });
+  const [isDragging, setIsDragging] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
   const {
     toast,
     showToast,
@@ -124,9 +182,113 @@ export default function ControlDock({
     setResumeEnabled(nextResumeEnabled);
   };
 
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    const target = getCornerPosition(dockCorner, rect.width, rect.height);
+    setDockPos(target);
+  }, [dockCorner]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      const rect = panel.getBoundingClientRect();
+      setDockPos((prev) => {
+        if (isDragging) return clampPoint(prev, rect.width, rect.height);
+        return getCornerPosition(dockCorner, rect.width, rect.height);
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dockCorner, isDragging]);
+
+  const startDockDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (open) return;
+    const target = event.target as HTMLElement;
+    const blocked = target.closest(
+      "button, input, textarea, select, [role='checkbox'], [data-no-drag='true']"
+    );
+    if (blocked) return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    dragRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    };
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (open) {
+      dragRef.current = null;
+      setIsDragging(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const onPointerMove = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      const panel = panelRef.current;
+      if (!drag || !panel) return;
+      if (event.pointerId !== drag.pointerId) return;
+      const rect = panel.getBoundingClientRect();
+      const next = clampPoint(
+        { x: event.clientX - drag.offsetX, y: event.clientY - drag.offsetY },
+        rect.width,
+        rect.height
+      );
+      setDockPos(next);
+    };
+
+    const endDrag = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      const panel = panelRef.current;
+      if (!drag || !panel) return;
+      if (event.pointerId !== drag.pointerId) return;
+      const rect = panel.getBoundingClientRect();
+      const corner = nearestCorner(dockPos, rect.width, rect.height);
+      setDockCorner(corner);
+      setDockPos(getCornerPosition(corner, rect.width, rect.height));
+      dragRef.current = null;
+      setIsDragging(false);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+    };
+  }, [dockPos, isDragging, setDockCorner]);
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      <div className="flex flex-col gap-6 p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-2xl border border-white/20">
+    <>
+      <div className="fixed inset-0 pointer-events-none z-20">
+        <div
+          ref={panelRef}
+          onPointerDown={startDockDrag}
+          className={`absolute flex flex-col gap-6 p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-2xl border border-white/20 ${
+            open ? "pointer-events-none" : "pointer-events-auto"
+          } ${
+            isDragging ? "cursor-grabbing select-none" : "cursor-grab"
+          }`}
+          style={{
+            left: dockPos.x,
+            top: dockPos.y,
+            transition: isDragging
+              ? "none"
+              : "left 280ms cubic-bezier(0.2, 0.9, 0.2, 1), top 280ms cubic-bezier(0.2, 0.9, 0.2, 1)",
+          }}
+        >
         <div className="flex items-center gap-4 justify-around">
           <Timer
             key={timerKey}
@@ -142,6 +304,7 @@ export default function ControlDock({
               onClick={() => {
                 void togglePlayback();
               }}
+              data-no-drag="true"
             >
               {mode === "playing" ? (
                 <Pause className="w-6 h-6 text-white" />
@@ -153,6 +316,7 @@ export default function ControlDock({
             <button
               className="p-2 rounded-full bg-white/10 hover:bg-white/20"
               onClick={resetToBase}
+              data-no-drag="true"
             >
               <RotateCcw className="w-6 h-6 text-white" />
             </button>
@@ -160,6 +324,7 @@ export default function ControlDock({
             <button
               className="p-2 rounded-full bg-white/10 hover:bg-white/20"
               onClick={() => setOpen(true)}
+              data-no-drag="true"
             >
               <Settings className="w-6 h-6 text-white" />
             </button>
@@ -175,6 +340,7 @@ export default function ControlDock({
             onPointerUp={endHold}
             onPointerCancel={endHold}
             onPointerLeave={endHold}
+            data-no-drag="true"
           >
             <div className="h-10 w-10 rounded-full grid place-items-center bg-white/10 backdrop-blur-md border border-white/20">
               <span className="text-white font-semibold">{sessionCounter}</span>
@@ -189,6 +355,7 @@ export default function ControlDock({
                 session === s ? "bg-white/20" : "bg-white/10 hover:bg-white/20"
               } text-white`}
               onClick={() => setSession(s)}
+              data-no-drag="true"
             >
               {s === "focus"
                 ? "Focus"
@@ -197,6 +364,7 @@ export default function ControlDock({
                 : "Long-Break"}
             </button>
           ))}
+        </div>
         </div>
       </div>
 
@@ -219,6 +387,6 @@ export default function ControlDock({
           {toast}
         </div>
       )}
-    </div>
+    </>
   );
 }
