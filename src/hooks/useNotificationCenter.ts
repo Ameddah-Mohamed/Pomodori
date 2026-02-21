@@ -55,12 +55,6 @@ export default function useNotificationCenter() {
         new Notification(title, { body });
       }
 
-      try {
-        new Audio("/ding.mp3").play();
-      } catch {
-        // Ignore audio playback failures.
-      }
-
       showToast(`${title} — ${body}`);
     },
     [showToast]

@@ -99,9 +99,28 @@ export default function ControlDock({
     longMin: number;
     resumeEnabled: boolean;
   }) => {
+    applySettings({
+      focusMin,
+      shortMin,
+      longMin,
+      resumeEnabled: nextResumeEnabled,
+    });
+    showToast("Timer settings saved");
+  };
+
+  const applySettings = ({
+    focusMin,
+    shortMin,
+    longMin,
+    resumeEnabled: nextResumeEnabled,
+  }: {
+    focusMin: number;
+    shortMin: number;
+    longMin: number;
+    resumeEnabled: boolean;
+  }) => {
     saveDurations({ focusMin, shortMin, longMin });
     setResumeEnabled(nextResumeEnabled);
-    showToast("Timer settings saved");
   };
 
   return (
@@ -188,6 +207,7 @@ export default function ControlDock({
         initialLongMin={durationsMin.longMin}
         initialResumeEnabled={resumeEnabled}
         onSave={handleSaveSettings}
+        onRealtimeChange={applySettings}
         wallpapers={wallpapers}
         selectedWallpaper={background}
         onSelectWallpaper={onChangeBackground}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Minus, Plus } from "lucide-react";
 
 type SettingsModalProps = {
   open: boolean;
@@ -10,6 +10,12 @@ type SettingsModalProps = {
   initialLongMin: number;
   initialResumeEnabled: boolean;
   onSave: (p: {
+    focusMin: number;
+    shortMin: number;
+    longMin: number;
+    resumeEnabled: boolean;
+  }) => void;
+  onRealtimeChange: (p: {
     focusMin: number;
     shortMin: number;
     longMin: number;
@@ -29,6 +35,7 @@ export default function SettingsModal({
   initialLongMin,
   initialResumeEnabled,
   onSave,
+  onRealtimeChange,
   wallpapers,
   selectedWallpaper,
   onSelectWallpaper,
@@ -53,7 +60,13 @@ export default function SettingsModal({
     setShortMin(initialShortMin);
     setLongMin(initialLongMin);
     setResumeEnabled(initialResumeEnabled);
-  }, [open, initialFocusMin, initialShortMin, initialLongMin, initialResumeEnabled]);
+  }, [
+    open,
+    initialFocusMin,
+    initialShortMin,
+    initialLongMin,
+    initialResumeEnabled,
+  ]);
 
   useEffect(() => {
     const d = dialogRef.current;
@@ -66,17 +79,30 @@ export default function SettingsModal({
   const close = (reason?: string) => dialogRef.current?.close(reason ?? "close");
   const clamp = (n: number, min = 1, max = 180) =>
     Number.isFinite(n) ? Math.min(Math.max(n, min), max) : min;
+  const buildPayload = () => ({
+    focusMin: clamp(focusMin),
+    shortMin: clamp(shortMin),
+    longMin: clamp(longMin),
+    resumeEnabled,
+  });
 
   const handleSave = () => {
-    const payload = {
-      focusMin: clamp(focusMin),
-      shortMin: clamp(shortMin),
-      longMin: clamp(longMin),
-      resumeEnabled,
-    };
+    const payload = buildPayload();
     onSave(payload);
     close("save");
   };
+
+  useEffect(() => {
+    if (!open) return;
+    onRealtimeChange(buildPayload());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    open,
+    focusMin,
+    shortMin,
+    longMin,
+    resumeEnabled,
+  ]);
 
   return (
     <dialog ref={dialogRef} className="m-0 p-0 bg-transparent">
@@ -86,7 +112,7 @@ export default function SettingsModal({
           if (e.target === e.currentTarget) close("backdrop");
         }}
       >
-        <div className="w-[480px] max-w-[92vw] rounded-2xl border border-white/20 bg-white/10 text-white backdrop-blur-md shadow-2xl p-6">
+        <div className="w-[480px] max-w-[92vw] max-h-[88vh] overflow-y-auto rounded-2xl border border-white/20 bg-white/10 text-white backdrop-blur-md shadow-2xl p-6">
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Settings</h2>
@@ -111,12 +137,19 @@ export default function SettingsModal({
             <p className="text-xs text-white/70">Values are clamped between 1 and 180 minutes.</p>
             <label className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-3">
               <span className="text-sm text-white/90">Resume timer after page refresh</span>
-              <input
-                type="checkbox"
-                checked={resumeEnabled}
-                onChange={(e) => setResumeEnabled(e.currentTarget.checked)}
-                className="h-4 w-4 accent-white"
-              />
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={resumeEnabled}
+                onClick={() => setResumeEnabled((prev) => !prev)}
+                className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${
+                  resumeEnabled
+                    ? "border-white/80 bg-white text-black"
+                    : "border-white/50 bg-white/10 text-transparent"
+                }`}
+              >
+                <Check className="h-4 w-4" />
+              </button>
             </label>
 
             <div className="pt-2">
@@ -190,10 +223,22 @@ function NumberField({
   max?: number;
   step?: number;
 }) {
+  const safeValue = Number.isFinite(value) ? value : min;
+  const stepDown = () => onChange(Math.max(min, safeValue - step));
+  const stepUp = () => onChange(Math.min(max, safeValue + step));
+
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-white/85">{label}</span>
-      <div className="relative">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={stepDown}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 hover:bg-white/20"
+          aria-label={`Decrease ${label}`}
+        >
+          <Minus className="h-4 w-4 text-white" />
+        </button>
         <input
           type="number"
           min={min}
@@ -205,13 +250,18 @@ function NumberField({
             onChange(Number.isFinite(num) ? num : NaN);
           }}
           className="
-            w-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-4 py-3 pr-16 text-white
+            w-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-4 py-3 text-center text-white
             outline-none focus:ring-2 focus:ring-white/30 focus:outline-none
           "
         />
-        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-white/70">
-          min
-        </span>
+        <button
+          type="button"
+          onClick={stepUp}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 hover:bg-white/20"
+          aria-label={`Increase ${label}`}
+        >
+          <Plus className="h-4 w-4 text-white" />
+        </button>
       </div>
     </label>
   );
