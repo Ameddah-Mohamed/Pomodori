@@ -147,9 +147,24 @@ export default function SettingsModal({
 
         {/* Body */}
         <div className="space-y-5">
-          <NumberField label="Focus (minutes)" value={focusMin} onChange={setFocusMin} />
-          <NumberField label="Short Break (minutes)" value={shortMin} onChange={setShortMin} />
-          <NumberField label="Long Break (minutes)" value={longMin} onChange={setLongMin} />
+          <NumberField
+            label="Focus (minutes)"
+            value={focusMin}
+            onChange={setFocusMin}
+            onEnter={handleSave}
+          />
+          <NumberField
+            label="Short Break (minutes)"
+            value={shortMin}
+            onChange={setShortMin}
+            onEnter={handleSave}
+          />
+          <NumberField
+            label="Long Break (minutes)"
+            value={longMin}
+            onChange={setLongMin}
+            onEnter={handleSave}
+          />
           <p className="text-xs text-white/70">Values are clamped between 1 and 180 minutes.</p>
           <label className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-3">
             <span className="text-sm text-white/90">Resume timer after page refresh</span>
@@ -230,6 +245,7 @@ function NumberField({
   label,
   value,
   onChange,
+  onEnter,
   min = 1,
   max = 180,
   step = 1,
@@ -237,6 +253,7 @@ function NumberField({
   label: string;
   value: number;
   onChange: (n: number) => void;
+  onEnter?: () => void;
   min?: number;
   max?: number;
   step?: number;
@@ -259,12 +276,17 @@ function NumberField({
             const num = Number(e.currentTarget.value);
             onChange(Number.isFinite(num) ? num : NaN);
           }}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            onEnter?.();
+          }}
           className="
-            no-spinner w-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-4 py-3 pr-12 text-white
+            no-spinner w-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-4 py-3 pr-10 text-white
             outline-none focus:ring-2 focus:ring-white/30 focus:outline-none
           "
         />
-        <div className="absolute inset-y-1 right-1 flex w-8 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/10">
+        <div className="absolute inset-y-1 right-1 flex w-7 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/10">
           <button
             type="button"
             onClick={stepUp}
