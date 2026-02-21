@@ -7,7 +7,6 @@ import type { Session } from "../hooks/usePomodoroEngine";
 import useNotificationCenter from "../hooks/useNotificationCenter";
 import useLongPressReset from "../hooks/useLongPressReset";
 import type { Wallpaper } from "../types/wallpaper";
-import usePersistentState from "../hooks/usePersistentState";
 
 type ControlDockProps = {
   wallpapers: Wallpaper[];
@@ -87,10 +86,7 @@ export default function ControlDock({
     completeCurrentSession,
     syncRemaining,
   } = usePomodoroEngine();
-  const [dockCorner, setDockCorner] = usePersistentState<DockCorner>(
-    "pomodoro:dockCorner",
-    "bottom-left"
-  );
+  const [dockCorner, setDockCorner] = useState<DockCorner>("center");
   const [open, setOpen] = useState(false);
   const [dockPos, setDockPos] = useState<Point>({ x: SNAP_MARGIN, y: SNAP_MARGIN });
   const [isDragging, setIsDragging] = useState(false);
