@@ -76,6 +76,7 @@ export default function ControlDock({
     setMode,
     timerKey,
     duration,
+    remainingMs,
     sessionCounter,
     setSessionCounter,
     resetToBase,
@@ -106,6 +107,18 @@ export default function ControlDock({
     if (mode !== "playing") await ensureNotificationPermission();
     setMode(mode === "playing" ? "paused" : "playing");
   };
+
+  useEffect(() => {
+    const format = (ms: number) => {
+      const totalSec = Math.floor(ms / 1000);
+      const s = totalSec % 60;
+      const m = Math.floor(totalSec / 60) % 60;
+      const h = Math.floor(totalSec / 3600);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+    };
+    document.title = mode === "playing" ? format(remainingMs) : "Pomodori <3";
+  }, [mode, remainingMs]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

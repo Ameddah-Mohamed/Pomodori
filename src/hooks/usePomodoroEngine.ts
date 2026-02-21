@@ -181,10 +181,17 @@ export default function usePomodoroEngine() {
   };
 
   const completeCurrentSession = () => {
+    const completedSession = session;
     setMode("paused");
     setRemainingMs(0);
-    if (session === "focus") setSessionCounter((prev) => prev + 1);
-    return session;
+    if (completedSession === "focus") {
+      const nextCounter = sessionCounter + 1;
+      setSessionCounter(nextCounter);
+      setSession(nextCounter % 3 === 0 ? "long" : "short");
+    } else {
+      setSession("focus");
+    }
+    return completedSession;
   };
 
   const syncRemaining = useCallback((ms: number) => {
@@ -198,6 +205,7 @@ export default function usePomodoroEngine() {
     setMode,
     timerKey,
     duration,
+    remainingMs,
     sessionCounter,
     setSessionCounter,
     resetToBase,
