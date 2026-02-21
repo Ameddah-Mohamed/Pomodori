@@ -260,11 +260,11 @@ function NumberField({
             onChange(Number.isFinite(num) ? num : NaN);
           }}
           className="
-            no-spinner w-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-4 py-3 pr-14 text-white
+            no-spinner w-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-4 py-3 pr-12 text-white
             outline-none focus:ring-2 focus:ring-white/30 focus:outline-none
           "
         />
-        <div className="absolute inset-y-1 right-1 flex w-10 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/10">
+        <div className="absolute inset-y-1 right-1 flex w-8 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/10">
           <button
             type="button"
             onClick={stepUp}
