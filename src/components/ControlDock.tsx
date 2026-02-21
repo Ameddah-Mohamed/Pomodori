@@ -27,8 +27,11 @@ export default function ControlDock({
     setSessionCounter,
     resetToBase,
     durationsMin,
+    resumeEnabled,
+    setResumeEnabled,
     saveDurations,
     completeCurrentSession,
+    syncRemaining,
   } = usePomodoroEngine();
   const [open, setOpen] = useState(false);
 
@@ -118,12 +121,15 @@ export default function ControlDock({
     focusMin,
     shortMin,
     longMin,
+    resumeEnabled: nextResumeEnabled,
   }: {
     focusMin: number;
     shortMin: number;
     longMin: number;
+    resumeEnabled: boolean;
   }) => {
     saveDurations({ focusMin, shortMin, longMin });
+    setResumeEnabled(nextResumeEnabled);
     showToast("Timer settings saved");
   };
 
@@ -136,6 +142,7 @@ export default function ControlDock({
             duration={duration}
             state={mode}
             onComplete={handleTimerComplete}
+            onTick={syncRemaining}
           />
 
           <div className="flex items-center gap-2">
@@ -180,10 +187,12 @@ export default function ControlDock({
                       holdPct * 360
                     }deg, rgba(255,255,255,0.18) 0deg)`
                   : "rgba(255,255,255,0.12)",
+              touchAction: "none",
             }}
-            onMouseDown={beginResetHold}
-            onMouseUp={endResetHold}
-            onMouseLeave={endResetHold}
+            onPointerDown={beginResetHold}
+            onPointerUp={endResetHold}
+            onPointerCancel={endResetHold}
+            onPointerLeave={endResetHold}
           >
             <div className="h-10 w-10 rounded-full grid place-items-center bg-white/10 backdrop-blur-md border border-white/20">
               <span className="text-white font-semibold">{sessionCounter}</span>
@@ -215,6 +224,7 @@ export default function ControlDock({
         initialFocusMin={durationsMin.focusMin}
         initialShortMin={durationsMin.shortMin}
         initialLongMin={durationsMin.longMin}
+        initialResumeEnabled={resumeEnabled}
         onSave={handleSaveSettings}
         wallpapers={wallpapers}
         selectedWallpaper={background}

@@ -8,7 +8,13 @@ type SettingsModalProps = {
   initialFocusMin: number;
   initialShortMin: number;
   initialLongMin: number;
-  onSave: (p: { focusMin: number; shortMin: number; longMin: number }) => void;
+  initialResumeEnabled: boolean;
+  onSave: (p: {
+    focusMin: number;
+    shortMin: number;
+    longMin: number;
+    resumeEnabled: boolean;
+  }) => void;
 
   wallpapers: string[];
   selectedWallpaper: string;
@@ -21,6 +27,7 @@ export default function SettingsModal({
   initialFocusMin,
   initialShortMin,
   initialLongMin,
+  initialResumeEnabled,
   onSave,
   wallpapers,
   selectedWallpaper,
@@ -31,6 +38,7 @@ export default function SettingsModal({
   const [focusMin, setFocusMin] = useState<number>(initialFocusMin);
   const [shortMin, setShortMin] = useState<number>(initialShortMin);
   const [longMin, setLongMin] = useState<number>(initialLongMin);
+  const [resumeEnabled, setResumeEnabled] = useState<boolean>(initialResumeEnabled);
 
   useEffect(() => {
     const d = dialogRef.current;
@@ -44,7 +52,8 @@ export default function SettingsModal({
     setFocusMin(initialFocusMin);
     setShortMin(initialShortMin);
     setLongMin(initialLongMin);
-  }, [open, initialFocusMin, initialShortMin, initialLongMin]);
+    setResumeEnabled(initialResumeEnabled);
+  }, [open, initialFocusMin, initialShortMin, initialLongMin, initialResumeEnabled]);
 
   useEffect(() => {
     const d = dialogRef.current;
@@ -63,6 +72,7 @@ export default function SettingsModal({
       focusMin: clamp(focusMin),
       shortMin: clamp(shortMin),
       longMin: clamp(longMin),
+      resumeEnabled,
     };
     onSave(payload);
     close("save");
@@ -99,6 +109,15 @@ export default function SettingsModal({
             <NumberField label="Short Break (minutes)" value={shortMin} onChange={setShortMin} />
             <NumberField label="Long Break (minutes)" value={longMin} onChange={setLongMin} />
             <p className="text-xs text-white/70">Values are clamped between 1 and 180 minutes.</p>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-3">
+              <span className="text-sm text-white/90">Resume timer after page refresh</span>
+              <input
+                type="checkbox"
+                checked={resumeEnabled}
+                onChange={(e) => setResumeEnabled(e.currentTarget.checked)}
+                className="h-4 w-4 accent-white"
+              />
+            </label>
 
             <div className="pt-2">
               <h3 className="mb-2 text-sm font-semibold text-white/90">Wallpaper</h3>

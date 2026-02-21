@@ -2,20 +2,22 @@
 import { useEffect, useRef, useState } from "react";
 
 type TimerProps = {
-  duration: number;                  // ms
+  duration: number; // ms
   state: "playing" | "paused";
-  onComplete?: () => void;           // fires once when countdown hits 0
+  onComplete?: () => void; // fires once when countdown hits 0
+  onTick?: (remainingMs: number) => void;
 };
 
-export default function Timer({ duration, state, onComplete }: TimerProps) {
+export default function Timer({ duration, state, onComplete, onTick }: TimerProps) {
   const [time, setTime] = useState(duration);
-  const firedRef = useRef(false);    // ensure onComplete runs once per session
+  const firedRef = useRef(false); // ensure onComplete runs once per session
 
   // Snap to new duration (reset view & completion flag)
   useEffect(() => {
     setTime(duration);
+    onTick?.(duration);
     firedRef.current = false;
-  }, [duration]);
+  }, [duration, onTick]);
 
   // Countdown when playing (wall-clock to avoid drift while backgrounded)
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function Timer({ duration, state, onComplete }: TimerProps) {
     const tick = () => {
       const remaining = Math.max(0, endAt - Date.now());
       setTime(remaining);
+      onTick?.(remaining);
       if (remaining === 0) {
         if (!firedRef.current) {
           firedRef.current = true;
@@ -36,11 +39,13 @@ export default function Timer({ duration, state, onComplete }: TimerProps) {
       }
     };
 
-    tick(); 
+    tick();
     id = window.setInterval(tick, 1000);
-    return () => { if (id !== undefined) clearInterval(id); };
+    return () => {
+      if (id !== undefined) clearInterval(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]); // do not depend on `time` to avoid re-creating interval every second
+  }, [state, onTick]); // do not depend on `time` to avoid re-creating interval every second
 
   const format = (ms: number) => {
     const totalSec = Math.floor(ms / 1000);
