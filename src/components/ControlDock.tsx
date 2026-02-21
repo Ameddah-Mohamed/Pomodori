@@ -1,9 +1,11 @@
 import { Pause, Play, RotateCcw, Settings } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Timer from "./Timer";
 import SettingsModal from "./SettingsModal";
 import usePomodoroEngine from "../hooks/usePomodoroEngine";
 import type { Session } from "../hooks/usePomodoroEngine";
+import useNotificationCenter from "../hooks/useNotificationCenter";
+import useLongPressReset from "../hooks/useLongPressReset";
 
 type ControlDockProps = {
   wallpapers: string[];
@@ -34,87 +36,56 @@ export default function ControlDock({
     syncRemaining,
   } = usePomodoroEngine();
   const [open, setOpen] = useState(false);
+  const {
+    toast,
+    showToast,
+    ensureNotificationPermission,
+    notifySessionEnd,
+  } = useNotificationCenter();
 
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
-  const showToast = (msg: string) => {
-    setToast(msg);
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 4000);
+  const togglePlayback = async () => {
+    if (mode !== "playing") await ensureNotificationPermission();
+    setMode(mode === "playing" ? "paused" : "playing");
   };
 
-  // Notifications and sound
-  async function ensureNotificationPermission(): Promise<boolean> {
-    if (!("Notification" in window)) return false;
-    if (Notification.permission === "granted") return true;
-    if (Notification.permission === "denied") return false;
-    try {
-      const res = await Notification.requestPermission();
-      return res === "granted";
-    } catch {
-      return false;
-    }
-  }
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      const isTypingTarget =
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        tagName === "SELECT" ||
+        target?.isContentEditable;
+      if (isTypingTarget) return;
 
-  const notifyEnd = (s: Session) => {
-    const titles: Record<Session, string> = {
-      focus: "Focus session finished",
-      short: "Short break finished",
-      long: "Long break finished",
-    };
-    const bodies: Record<Session, string> = {
-      focus: "Time for a break!",
-      short: "Back to focus 💪",
-      long: "Cycle complete! 🎉",
+      if (event.code === "KeyR") {
+        event.preventDefault();
+        resetToBase();
+        return;
+      }
+
+      if (event.code !== "Space") return;
+      event.preventDefault();
+      void togglePlayback();
     };
 
-    const title = titles[s];
-    const body = bodies[s];
-
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(title, { body });
-    }
-
-    try {
-      new Audio("/ding.mp3").play();
-    } catch {}
-
-    showToast(`${title} — ${body}`);
-  };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mode, resetToBase]);
 
   const handleTimerComplete = () => {
     const completedSession = completeCurrentSession();
-    notifyEnd(completedSession);
+    notifySessionEnd(completedSession);
   };
 
-  // --- Hold-to-reset session counter ---
-  const [holdPct, setHoldPct] = useState(0);
-  const holdRaf = useRef<number | null>(null);
-  const holdStart = useRef(0);
-  const HOLD_MS = 900;
-
-  const beginResetHold = () => {
-    if (holdRaf.current != null) return;
-    holdStart.current = performance.now();
-    const step = (t: number) => {
-      const pct = Math.min(1, (t - holdStart.current) / HOLD_MS);
-      setHoldPct(pct);
-      if (pct < 1) holdRaf.current = requestAnimationFrame(step);
-      else {
-        setSessionCounter(0);
-        showToast("Session counter reset");
-        setTimeout(() => setHoldPct(0), 150);
-        holdRaf.current = null;
-      }
-    };
-    holdRaf.current = requestAnimationFrame(step);
-  };
-
-  const endResetHold = () => {
-    if (holdRaf.current != null) cancelAnimationFrame(holdRaf.current);
-    holdRaf.current = null;
-    if (holdPct < 1) setHoldPct(0);
-  };
+  const { ringStyle, beginHold, endHold } = useLongPressReset({
+    holdMs: 900,
+    onReset: () => {
+      setSessionCounter(0);
+      showToast("Session counter reset");
+    },
+  });
 
   // --- Persist durations on save ---
   const handleSaveSettings = ({
@@ -148,9 +119,8 @@ export default function ControlDock({
           <div className="flex items-center gap-2">
             <button
               className="p-2 rounded-full bg-white/10 hover:bg-white/20"
-              onClick={async () => {
-                if (mode !== "playing") await ensureNotificationPermission();
-                setMode(mode === "playing" ? "paused" : "playing");
+              onClick={() => {
+                void togglePlayback();
               }}
             >
               {mode === "playing" ? (
@@ -180,19 +150,11 @@ export default function ControlDock({
           {/* Session Counter */}
           <div
             className="relative h-12 w-12 rounded-full grid place-items-center cursor-pointer"
-            style={{
-              background:
-                holdPct > 0
-                  ? `conic-gradient(rgba(255,255,255,0.9) ${
-                      holdPct * 360
-                    }deg, rgba(255,255,255,0.18) 0deg)`
-                  : "rgba(255,255,255,0.12)",
-              touchAction: "none",
-            }}
-            onPointerDown={beginResetHold}
-            onPointerUp={endResetHold}
-            onPointerCancel={endResetHold}
-            onPointerLeave={endResetHold}
+            style={ringStyle}
+            onPointerDown={beginHold}
+            onPointerUp={endHold}
+            onPointerCancel={endHold}
+            onPointerLeave={endHold}
           >
             <div className="h-10 w-10 rounded-full grid place-items-center bg-white/10 backdrop-blur-md border border-white/20">
               <span className="text-white font-semibold">{sessionCounter}</span>
