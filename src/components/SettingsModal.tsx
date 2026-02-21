@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Check, Minus, Plus } from "lucide-react";
+import type { Wallpaper } from "../types/wallpaper";
 
 type SettingsModalProps = {
   open: boolean;
@@ -22,7 +23,7 @@ type SettingsModalProps = {
     resumeEnabled: boolean;
   }) => void;
 
-  wallpapers: string[];
+  wallpapers: Wallpaper[];
   selectedWallpaper: string;
   onSelectWallpaper: (src: string) => void;
 };
@@ -155,17 +156,20 @@ export default function SettingsModal({
             <div className="pt-2">
               <h3 className="mb-2 text-sm font-semibold text-white/90">Wallpaper</h3>
               <div className="grid grid-cols-3 gap-3 max-h-48 overflow-auto pr-1">
-                {wallpapers.map((src) => {
+                {wallpapers.map((wallpaper) => {
+                  const src = wallpaper.src;
                   const selected = src === selectedWallpaper;
                   return (
                     <button
-                      key={src}
+                      key={wallpaper.id}
                       onClick={() => onSelectWallpaper(src)}
                       className="relative group overflow-hidden rounded-xl transition focus:outline-none"
                     >
                       <img
-                        src={src}
-                        alt="Wallpaper"
+                        src={wallpaper.thumb ?? src}
+                        alt={wallpaper.label ?? "Wallpaper"}
+                        loading="lazy"
+                        decoding="async"
                         className={`h-20 w-full object-cover transition-transform duration-200 ${
                           selected ? "scale-105" : "group-hover:scale-[1.02]"
                         }`}

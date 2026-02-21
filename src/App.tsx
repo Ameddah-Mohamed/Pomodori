@@ -1,29 +1,82 @@
 import { useEffect, useState } from "react";
 import Background from "./components/Background";
 import ControlDock from "./components/ControlDock";
+import type { Wallpaper } from "./types/wallpaper";
 
-const WALLPAPERS = [
-  "/images/wallpapers/back-1.webp",
-  "/images/wallpapers/back-2.webp",
-  "/images/wallpapers/back-3.webp",
-  "/images/wallpapers/back-4.webp",
-  "/images/wallpapers/back-5.webp",
-  "/images/wallpapers/back-6.webp",
-  "/images/wallpapers/back-7.webp",
-  "/images/wallpapers/back-8.webp",
-  "/images/wallpapers/back-9.webp",
-  "/images/wallpapers/back-10.webp",
+const FALLBACK_WALLPAPERS: Wallpaper[] = [
+  { id: "back-1", src: "/images/wallpapers/back-1.webp", thumb: "/images/wallpapers/back-1.webp" },
 ];
 
+const isWallpaper = (value: unknown): value is Wallpaper => {
+  if (!value || typeof value !== "object") return false;
+  const obj = value as Record<string, unknown>;
+  return typeof obj.id === "string" && typeof obj.src === "string";
+};
+
 export default function App() {
+  const [manifestReady, setManifestReady] = useState(false);
+  const [wallpapers, setWallpapers] = useState<Wallpaper[]>(FALLBACK_WALLPAPERS);
+
   // read once from localStorage; fall back to first wallpaper
   const [bg, setBg] = useState<string>(() => {
     try {
-      return localStorage.getItem("pomodoro:bg") ?? WALLPAPERS[0];
+      return localStorage.getItem("pomodoro:bg") ?? FALLBACK_WALLPAPERS[0].src;
     } catch {
-      return WALLPAPERS[0];
+      return FALLBACK_WALLPAPERS[0].src;
     }
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadManifest = async () => {
+      try {
+        const response = await fetch("/images/wallpapers/manifest.json");
+        if (!response.ok) return;
+        const data: unknown = await response.json();
+        if (!Array.isArray(data)) return;
+        const parsed = data.filter(isWallpaper);
+        if (!cancelled && parsed.length > 0) {
+          setWallpapers(parsed);
+          setManifestReady(true);
+        }
+      } catch {
+        // Keep fallback wallpapers.
+      }
+    };
+    void loadManifest();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!manifestReady || wallpapers.length === 0) return;
+    const bgExists = wallpapers.some((item) => item.src === bg);
+    if (bgExists) return;
+    setBg(wallpapers[0].src);
+  }, [bg, manifestReady, wallpapers]);
+
+  useEffect(() => {
+    if (wallpapers.length === 0) return;
+    const preload = () => {
+      for (const wallpaper of wallpapers) {
+        const image = new Image();
+        image.src = wallpaper.thumb ?? wallpaper.src;
+      }
+    };
+    const idleCallback = (window as Window & {
+      requestIdleCallback?: (callback: () => void) => number;
+      cancelIdleCallback?: (id: number) => void;
+    }).requestIdleCallback;
+    if (idleCallback) {
+      const id = idleCallback(preload);
+      return () => {
+        (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id);
+      };
+    }
+    const timerId = window.setTimeout(preload, 120);
+    return () => window.clearTimeout(timerId);
+  }, [wallpapers]);
 
   // persist whenever it changes
   useEffect(() => {
@@ -38,7 +91,7 @@ export default function App() {
 
       {/* Pass choices + current + setter to your UI */}
       <ControlDock
-        wallpapers={WALLPAPERS}
+        wallpapers={wallpapers}
         background={bg}
         onChangeBackground={setBg}
       />

@@ -6,9 +6,10 @@ import usePomodoroEngine from "../hooks/usePomodoroEngine";
 import type { Session } from "../hooks/usePomodoroEngine";
 import useNotificationCenter from "../hooks/useNotificationCenter";
 import useLongPressReset from "../hooks/useLongPressReset";
+import type { Wallpaper } from "../types/wallpaper";
 
 type ControlDockProps = {
-  wallpapers: string[];
+  wallpapers: Wallpaper[];
   background: string;
   onChangeBackground: (src: string) => void;
 };
