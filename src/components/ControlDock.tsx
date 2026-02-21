@@ -1,9 +1,9 @@
 import { Pause, Play, RotateCcw, Settings } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Timer from "./Timer";
 import SettingsModal from "./SettingsModal";
-
-type Session = "focus" | "short" | "long";
+import usePomodoroEngine from "../hooks/usePomodoroEngine";
+import type { Session } from "../hooks/usePomodoroEngine";
 
 type ControlDockProps = {
   wallpapers: string[];
@@ -16,36 +16,21 @@ export default function ControlDock({
   background,
   onChangeBackground,
 }: ControlDockProps) {
-  // Load defaults or from localStorage
-  const getStoredDurations = () => {
-    const stored = localStorage.getItem("pomodoroDurations");
-    if (stored) {
-      try {
-        const { focusMin, shortMin, longMin } = JSON.parse(stored);
-        return {
-          focus: focusMin * 60_000,
-          short: shortMin * 60_000,
-          long: longMin * 60_000,
-        };
-      } catch {
-        return { focus: 25 * 60_000, short: 5 * 60_000, long: 15 * 60_000 };
-      }
-    }
-    return { focus: 25 * 60_000, short: 5 * 60_000, long: 15 * 60_000 };
-  };
-
-  const { focus, short, long } = getStoredDurations();
-
-  const [focusDuration, setFocusDuration] = useState(focus);
-  const [shortBreakDuration, setShortBreakDuration] = useState(short);
-  const [longBreakDuration, setLongBreakDuration] = useState(long);
-
-  const [session, setSession] = useState<Session>("focus");
-  const [duration, setDuration] = useState(focusDuration);
-  const [mode, setMode] = useState<"playing" | "paused">("paused");
-  const [timerKey, setTimerKey] = useState(0);
+  const {
+    session,
+    setSession,
+    mode,
+    setMode,
+    timerKey,
+    duration,
+    sessionCounter,
+    setSessionCounter,
+    resetToBase,
+    durationsMin,
+    saveDurations,
+    completeCurrentSession,
+  } = usePomodoroEngine();
   const [open, setOpen] = useState(false);
-  const [sessionCounter, setSessionCounter] = useState<number>(0);
 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
@@ -53,31 +38,6 @@ export default function ControlDock({
     setToast(msg);
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(() => setToast(null), 4000);
-  };
-
-  // Sync timer when session or durations change
-  useEffect(() => {
-    const base =
-      session === "focus"
-        ? focusDuration
-        : session === "short"
-        ? shortBreakDuration
-        : longBreakDuration;
-    setDuration(base);
-    setMode("paused");
-    setTimerKey((k) => k + 1);
-  }, [session, focusDuration, shortBreakDuration, longBreakDuration]);
-
-  const resetToBase = () => {
-    const base =
-      session === "focus"
-        ? focusDuration
-        : session === "short"
-        ? shortBreakDuration
-        : longBreakDuration;
-    setDuration(base);
-    setMode("paused");
-    setTimerKey((k) => k + 1);
   };
 
   // Notifications and sound
@@ -120,9 +80,8 @@ export default function ControlDock({
   };
 
   const handleTimerComplete = () => {
-    setMode("paused");
-    notifyEnd(session);
-    if (session === "focus") setSessionCounter((prev) => prev + 1);
+    const completedSession = completeCurrentSession();
+    notifyEnd(completedSession);
   };
 
   // --- Hold-to-reset session counter ---
@@ -164,16 +123,7 @@ export default function ControlDock({
     shortMin: number;
     longMin: number;
   }) => {
-    setFocusDuration(focusMin * 60_000);
-    setShortBreakDuration(shortMin * 60_000);
-    setLongBreakDuration(longMin * 60_000);
-
-    // Save to localStorage
-    localStorage.setItem(
-      "pomodoroDurations",
-      JSON.stringify({ focusMin, shortMin, longMin })
-    );
-
+    saveDurations({ focusMin, shortMin, longMin });
     showToast("Timer settings saved");
   };
 
@@ -262,9 +212,9 @@ export default function ControlDock({
       <SettingsModal
         open={open}
         onClose={() => setOpen(false)}
-        initialFocusMin={focusDuration / 60_000}
-        initialShortMin={shortBreakDuration / 60_000}
-        initialLongMin={longBreakDuration / 60_000}
+        initialFocusMin={durationsMin.focusMin}
+        initialShortMin={durationsMin.shortMin}
+        initialLongMin={durationsMin.longMin}
         onSave={handleSaveSettings}
         wallpapers={wallpapers}
         selectedWallpaper={background}
