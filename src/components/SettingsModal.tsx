@@ -41,6 +41,9 @@ export default function SettingsModal({
   selectedWallpaper,
   onSelectWallpaper,
 }: SettingsModalProps) {
+  const ANIM_MS = 180;
+  const [shouldRender, setShouldRender] = useState(open);
+  const [visible, setVisible] = useState(false);
   const [focusMin, setFocusMin] = useState<number>(initialFocusMin);
   const [shortMin, setShortMin] = useState<number>(initialShortMin);
   const [longMin, setLongMin] = useState<number>(initialLongMin);
@@ -48,7 +51,28 @@ export default function SettingsModal({
   const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (open) {
+      setShouldRender(true);
+      const id = window.setTimeout(() => setVisible(true), 10);
+      return () => window.clearTimeout(id);
+    }
+    setVisible(false);
+    const id = window.setTimeout(() => setShouldRender(false), ANIM_MS);
+    return () => window.clearTimeout(id);
+  }, [open]);
+
+  useEffect(() => {
+    if (!showInfo) return;
+    const closeInfo = () => setShowInfo(false);
+    window.addEventListener("pointerdown", closeInfo);
+    return () => window.removeEventListener("pointerdown", closeInfo);
+  }, [showInfo]);
+
+  useEffect(() => {
+    if (!open) {
+      setShowInfo(false);
+      return;
+    }
     setFocusMin(initialFocusMin);
     setShortMin(initialShortMin);
     setLongMin(initialLongMin);
@@ -89,16 +113,22 @@ export default function SettingsModal({
     resumeEnabled,
   ]);
 
-  if (!open) return null;
+  if (!shouldRender) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center backdrop-blur-sm"
+      className={`fixed inset-0 z-50 grid place-items-center transition duration-200 ${
+        visible ? "opacity-100 backdrop-blur-sm" : "opacity-0 backdrop-blur-0 pointer-events-none"
+      }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) close("backdrop");
       }}
     >
-      <div className="w-[480px] max-w-[92vw] max-h-[88vh] overflow-y-auto rounded-2xl border border-white/20 bg-white/10 text-white backdrop-blur-md shadow-2xl p-6">
+      <div
+        className={`w-[480px] max-w-[92vw] max-h-[88vh] overflow-y-auto rounded-2xl border border-white/20 bg-white/10 text-white backdrop-blur-md shadow-2xl p-6 transition duration-200 ${
+          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-1 scale-[0.98] opacity-0"
+        }`}
+      >
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Settings</h2>
@@ -107,7 +137,10 @@ export default function SettingsModal({
             <button
               type="button"
               aria-label="Show shortcuts info"
-              onClick={() => setShowInfo((prev) => !prev)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowInfo((prev) => !prev);
+              }}
               className="
                 rounded-lg p-2 bg-white/10 hover:bg-white/20
                 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-0
@@ -127,7 +160,7 @@ export default function SettingsModal({
             </button>
 
             {showInfo && (
-              <div className="absolute right-0 top-12 z-10 w-72 rounded-xl border border-white/20 bg-[#101014]/90 p-3 text-sm text-white shadow-2xl">
+              <div className="absolute right-0 top-12 z-10 w-80 rounded-xl border border-white/20 bg-[#101014]/90 p-3 text-sm text-white shadow-2xl">
                 <p className="mb-2 text-xs uppercase tracking-wide text-white/70">Shortcuts</p>
                 <p className="flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
                   <span>Play / Pause</span>
@@ -136,6 +169,25 @@ export default function SettingsModal({
                 <p className="mt-1.5 flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
                   <span>Reset timer</span>
                   <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">R</kbd>
+                </p>
+                <p className="mt-1.5 flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
+                  <span>Toggle settings</span>
+                  <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">S</kbd>
+                </p>
+                <p className="mt-1.5 flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
+                  <span>Toggle music modal</span>
+                  <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">M</kbd>
+                </p>
+                <p className="mt-1.5 flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
+                  <span>Music play / pause</span>
+                  <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">P</kbd>
+                </p>
+                <p className="mt-1.5 flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
+                  <span>Prev / next song (same category)</span>
+                  <span className="flex items-center gap-1">
+                    <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">↑</kbd>
+                    <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">↓</kbd>
+                  </span>
                 </p>
                 <p className="mt-2 text-xs text-white/70">
                   Drag the timer panel and release to snap to a corner or center.

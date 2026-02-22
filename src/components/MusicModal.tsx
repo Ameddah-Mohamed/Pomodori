@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 type MusicTab = "lofi" | "mix" | "upbeat";
 type MusicTrack = { title: string; src: string };
 
@@ -38,17 +40,38 @@ export default function MusicModal({
   loopEnabled,
   onToggleLoop,
 }: MusicModalProps) {
-  if (!open) return null;
+  const ANIM_MS = 180;
+  const [shouldRender, setShouldRender] = useState(open);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setShouldRender(true);
+      const id = window.setTimeout(() => setVisible(true), 10);
+      return () => window.clearTimeout(id);
+    }
+    setVisible(false);
+    const id = window.setTimeout(() => setShouldRender(false), ANIM_MS);
+    return () => window.clearTimeout(id);
+  }, [open]);
+
+  if (!shouldRender) return null;
   const current = tracks[currentTrackIndex] ?? tracks[0];
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center backdrop-blur-sm"
+      className={`fixed inset-0 z-50 grid place-items-center transition duration-200 ${
+        visible ? "opacity-100 backdrop-blur-sm" : "opacity-0 backdrop-blur-0 pointer-events-none"
+      }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-[560px] max-w-[92vw] h-[440px] max-h-[88vh] rounded-2xl border border-white/20 bg-white/10 text-white backdrop-blur-md shadow-2xl p-4 flex flex-col gap-3">
+      <div
+        className={`w-[560px] max-w-[92vw] h-[440px] max-h-[88vh] rounded-2xl border border-white/20 bg-white/10 text-white backdrop-blur-md shadow-2xl p-4 flex flex-col gap-3 transition duration-200 ${
+          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-1 scale-[0.98] opacity-0"
+        }`}
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="inline-flex rounded-lg bg-black/20 p-1">
             {tabs.map((tab) => (
