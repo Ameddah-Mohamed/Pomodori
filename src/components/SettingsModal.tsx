@@ -186,6 +186,10 @@ export default function SettingsModal({
                   <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">P</kbd>
                 </p>
                 <p className="mt-1.5 flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
+                  <span>Toggle fullscreen</span>
+                  <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">F</kbd>
+                </p>
+                <p className="mt-1.5 flex items-center justify-between rounded-md bg-white/5 px-2 py-1.5">
                   <span>Prev / next song (same category)</span>
                   <span className="flex items-center gap-1">
                     <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5">↑</kbd>

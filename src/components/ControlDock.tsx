@@ -155,6 +155,30 @@ export default function ControlDock({
     setMode(mode === "playing" ? "paused" : "playing");
   };
 
+  const toggleFullscreen = async () => {
+    const doc = document as Document & {
+      webkitExitFullscreen?: () => Promise<void> | void;
+    };
+    const root = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+
+    if (doc.fullscreenElement) {
+      try {
+        await (doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.());
+      } catch {
+        showToast("Could not exit fullscreen");
+      }
+      return;
+    }
+
+    try {
+      await (root.requestFullscreen?.() ?? root.webkitRequestFullscreen?.());
+    } catch {
+      showToast("Fullscreen is blocked by your browser");
+    }
+  };
+
   const tracks = MUSIC_LIBRARY[musicTab];
   const currentTrackIndex = selectedTrackIndexByTab[musicTab] ?? 0;
   const currentTrack = tracks[currentTrackIndex] ?? tracks[0];
@@ -328,6 +352,12 @@ export default function ControlDock({
       if (event.code === "KeyP") {
         event.preventDefault();
         void toggleMusic();
+        return;
+      }
+
+      if (event.code === "KeyF") {
+        event.preventDefault();
+        void toggleFullscreen();
         return;
       }
 
