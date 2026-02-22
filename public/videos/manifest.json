@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-02-22T16:42:31Z",
+  "generatedAt": "2026-02-22T21:38:31Z",
   "items": [
     {
       "id": "lofi-01",
@@ -9,7 +9,8 @@
         "webm": "/videos/lofi-01.webm",
         "mp4": "/videos/lofi-01.mp4"
       },
-      "thumb": "/videos/lofi-01.jpg"
+      "thumb": "/videos/lofi-01.jpg",
+      "sha256": "6ba7c5a9acc54b1e0efb3bc2144bf2eed42a2779b60ef4ae0e7119792f86b5b7"
     },
     {
       "id": "lofi-02",
@@ -18,7 +19,8 @@
         "webm": "/videos/lofi-02.webm",
         "mp4": "/videos/lofi-02.mp4"
       },
-      "thumb": "/videos/lofi-02.jpg"
+      "thumb": "/videos/lofi-02.jpg",
+      "sha256": "c26996bd46e04f8fa2ca855927977ae1f0a2f4f4c89c2b9507795f5f4f02b5f5"
     },
     {
       "id": "lofi-03",
@@ -27,7 +29,8 @@
         "webm": "/videos/lofi-03.webm",
         "mp4": "/videos/lofi-03.mp4"
       },
-      "thumb": "/videos/lofi-03.jpg"
+      "thumb": "/videos/lofi-03.jpg",
+      "sha256": "820a31ce102dbad6fe7672dca79a3e034bb334dadee3a28a0d236083404b681a"
     },
     {
       "id": "lofi-04",
@@ -36,7 +39,8 @@
         "webm": "/videos/lofi-04.webm",
         "mp4": "/videos/lofi-04.mp4"
       },
-      "thumb": "/videos/lofi-04.jpg"
+      "thumb": "/videos/lofi-04.jpg",
+      "sha256": "29cf84325d0bbedad403fbf34e6ce1d2917dd610eb9059fdf833f091fbdc0a0f"
     },
     {
       "id": "lofi-05",
@@ -45,7 +49,8 @@
         "webm": "/videos/lofi-05.webm",
         "mp4": "/videos/lofi-05.mp4"
       },
-      "thumb": "/videos/lofi-05.jpg"
+      "thumb": "/videos/lofi-05.jpg",
+      "sha256": "ee4ed8389aec587a0a90867e7e47c3f58dc51744b4f1a84d9eb12fa3a1c41896"
     },
     {
       "id": "lofi-06",
@@ -54,7 +59,8 @@
         "webm": "/videos/lofi-06.webm",
         "mp4": "/videos/lofi-06.mp4"
       },
-      "thumb": "/videos/lofi-06.jpg"
+      "thumb": "/videos/lofi-06.jpg",
+      "sha256": "3bd52e7029bd9b30ea0bd9debcbd1e9e5303dd499c41ee4449c9b0d8818a454d"
     },
     {
       "id": "lofi-07",
@@ -63,7 +69,38 @@
         "webm": "/videos/lofi-07.webm",
         "mp4": "/videos/lofi-07.mp4"
       },
-      "thumb": "/videos/lofi-07.jpg"
+      "thumb": "/videos/lofi-07.jpg",
+      "sha256": "a63897d72228366bbf62d0eb21e08bd2c11007d537a7f72d295f1a3fe9792897"
+    },
+    {
+      "id": "lofi-20260222-223655-97k9d2",
+      "title": "lofi-20260222-223655-97k9d2",
+      "sources": {
+        "webm": "/videos/lofi-20260222-223655-97k9d2.webm",
+        "mp4": "/videos/lofi-20260222-223655-97k9d2.mp4"
+      },
+      "thumb": "/videos/lofi-20260222-223655-97k9d2.jpg",
+      "sha256": "83330fcd8938dfa828b44183dba013867ee2242df3bd69dda3fae83f10e1e5bd"
+    },
+    {
+      "id": "lofi-20260222-223728-rlcyo9",
+      "title": "lofi-20260222-223728-rlcyo9",
+      "sources": {
+        "webm": "/videos/lofi-20260222-223728-rlcyo9.webm",
+        "mp4": "/videos/lofi-20260222-223728-rlcyo9.mp4"
+      },
+      "thumb": "/videos/lofi-20260222-223728-rlcyo9.jpg",
+      "sha256": "762d1ac461c91a67199b91c8f2340c181677b176903b024e4eb3b930a4c5ac25"
+    },
+    {
+      "id": "lofi-20260222-223800-6mxsnw",
+      "title": "lofi-20260222-223800-6mxsnw",
+      "sources": {
+        "webm": "/videos/lofi-20260222-223800-6mxsnw.webm",
+        "mp4": "/videos/lofi-20260222-223800-6mxsnw.mp4"
+      },
+      "thumb": "/videos/lofi-20260222-223800-6mxsnw.jpg",
+      "sha256": "29a583bcdaefbbf9970d734ec7db39d1c59b305e34aff6ba75ddfaaacae0e578"
     }
   ]
 }
