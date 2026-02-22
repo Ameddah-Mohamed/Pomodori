@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { X, Check, ChevronUp, ChevronDown, Info } from "lucide-react";
-import type { Wallpaper } from "../types/wallpaper";
+import type { VideoBackground, Wallpaper } from "../types/wallpaper";
 
 type SettingsModalProps = {
   open: boolean;
@@ -24,6 +25,7 @@ type SettingsModalProps = {
   }) => void;
 
   wallpapers: Wallpaper[];
+  videoBackgrounds: VideoBackground[];
   selectedWallpaper: string;
   onSelectWallpaper: (src: string) => void;
 };
@@ -38,6 +40,7 @@ export default function SettingsModal({
   onSave,
   onRealtimeChange,
   wallpapers,
+  videoBackgrounds,
   selectedWallpaper,
   onSelectWallpaper,
 }: SettingsModalProps) {
@@ -236,39 +239,83 @@ export default function SettingsModal({
           </label>
 
           <div className="pt-2">
-            <h3 className="mb-2 text-sm font-semibold text-white/90">Wallpaper</h3>
-            <div className="grid grid-cols-3 gap-3 max-h-48 overflow-auto pr-1">
-              {wallpapers.map((wallpaper) => {
-                const src = wallpaper.src;
-                const selected = src === selectedWallpaper;
-                return (
-                  <button
-                    key={wallpaper.id}
-                    onClick={() => onSelectWallpaper(src)}
-                    className="relative group overflow-hidden rounded-xl transition focus:outline-none"
-                  >
-                    <img
-                      src={wallpaper.thumb ?? src}
-                      alt={wallpaper.label ?? "Wallpaper"}
-                      loading="lazy"
-                      decoding="async"
-                      className={`h-20 w-full object-cover transition-transform duration-200 ${
-                        selected ? "scale-105" : "group-hover:scale-[1.02]"
-                      }`}
-                    />
-                    <div
-                      className={`absolute inset-0 rounded-xl ${
-                        selected ? "ring-2 ring-white/60" : "ring-0 group-hover:ring-1 ring-white/30"
-                      }`}
-                    />
-                    {selected && (
-                      <span className="absolute top-2 right-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm text-white">
-                        <Check className="h-4 w-4" />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            <h3 className="mb-2 text-sm font-semibold text-white/90">Background Library</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <BackgroundPanel title="Still Wallpapers">
+                <div className="grid grid-cols-2 gap-2 max-h-56 overflow-auto pr-1">
+                  {wallpapers.map((wallpaper) => {
+                    const src = wallpaper.src;
+                    const selected = src === selectedWallpaper;
+                    return (
+                      <button
+                        key={wallpaper.id}
+                        onClick={() => onSelectWallpaper(src)}
+                        className="relative group overflow-hidden rounded-xl transition focus:outline-none"
+                      >
+                        <img
+                          src={wallpaper.thumb ?? src}
+                          alt={wallpaper.label ?? "Wallpaper"}
+                          loading="lazy"
+                          decoding="async"
+                          className={`h-20 w-full object-cover transition-transform duration-200 ${
+                            selected ? "scale-105" : "group-hover:scale-[1.02]"
+                          }`}
+                        />
+                        <div
+                          className={`absolute inset-0 rounded-xl ${
+                            selected ? "ring-2 ring-white/60" : "ring-0 group-hover:ring-1 ring-white/30"
+                          }`}
+                        />
+                        {selected && (
+                          <span className="absolute top-2 right-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm text-white">
+                            <Check className="h-4 w-4" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </BackgroundPanel>
+
+              <BackgroundPanel title="Lofi Motion">
+                <div className="grid grid-cols-2 gap-2 max-h-56 overflow-auto pr-1">
+                  {videoBackgrounds.map((video) => {
+                    const src = video.webm ?? video.mp4;
+                    if (!src) return null;
+                    const selected = src === selectedWallpaper;
+                    return (
+                      <button
+                        key={video.id}
+                        onClick={() => onSelectWallpaper(src)}
+                        className="relative group overflow-hidden rounded-xl transition focus:outline-none"
+                      >
+                        <img
+                          src={video.thumb}
+                          alt={video.title}
+                          loading="lazy"
+                          decoding="async"
+                          className={`h-20 w-full object-cover transition-transform duration-200 ${
+                            selected ? "scale-105" : "group-hover:scale-[1.02]"
+                          }`}
+                        />
+                        <div
+                          className={`absolute inset-0 rounded-xl ${
+                            selected ? "ring-2 ring-white/60" : "ring-0 group-hover:ring-1 ring-white/30"
+                          }`}
+                        />
+                        <span className="absolute left-2 bottom-2 text-[10px] uppercase tracking-wide bg-black/55 text-white px-1.5 py-0.5 rounded">
+                          Video
+                        </span>
+                        {selected && (
+                          <span className="absolute top-2 right-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm text-white">
+                            <Check className="h-4 w-4" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </BackgroundPanel>
             </div>
           </div>
         </div>
@@ -289,6 +336,21 @@ export default function SettingsModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function BackgroundPanel({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-white/20 bg-white/5 p-3">
+      <p className="mb-2 text-xs uppercase tracking-wide text-white/70">{title}</p>
+      {children}
     </div>
   );
 }

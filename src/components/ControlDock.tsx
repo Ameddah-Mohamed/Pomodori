@@ -7,10 +7,11 @@ import usePomodoroEngine from "../hooks/usePomodoroEngine";
 import type { Session } from "../hooks/usePomodoroEngine";
 import useNotificationCenter from "../hooks/useNotificationCenter";
 import useLongPressReset from "../hooks/useLongPressReset";
-import type { Wallpaper } from "../types/wallpaper";
+import type { VideoBackground, Wallpaper } from "../types/wallpaper";
 
 type ControlDockProps = {
   wallpapers: Wallpaper[];
+  videoBackgrounds: VideoBackground[];
   background: string;
   onChangeBackground: (src: string) => void;
 };
@@ -99,6 +100,7 @@ const clampPoint = (point: Point, width: number, height: number): Point => {
 
 export default function ControlDock({
   wallpapers,
+  videoBackgrounds,
   background,
   onChangeBackground,
 }: ControlDockProps) {
@@ -602,6 +604,7 @@ export default function ControlDock({
         onSave={handleSaveSettings}
         onRealtimeChange={applySettings}
         wallpapers={wallpapers}
+        videoBackgrounds={videoBackgrounds}
         selectedWallpaper={background}
         onSelectWallpaper={onChangeBackground}
       />

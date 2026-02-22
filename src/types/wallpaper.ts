@@ -4,3 +4,11 @@ export type Wallpaper = {
   thumb?: string;
   label?: string;
 };
+
+export type VideoBackground = {
+  id: string;
+  title: string;
+  webm?: string;
+  mp4?: string;
+  thumb: string;
+};

@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "generatedAt": "2026-02-22T16:42:31Z",
+  "items": [
+    {
+      "id": "lofi-01",
+      "title": "lofi-01",
+      "sources": {
+        "webm": "/videos/lofi-01.webm",
+        "mp4": "/videos/lofi-01.mp4"
+      },
+      "thumb": "/videos/lofi-01.jpg"
+    },
+    {
+      "id": "lofi-02",
+      "title": "lofi-02",
+      "sources": {
+        "webm": "/videos/lofi-02.webm",
+        "mp4": "/videos/lofi-02.mp4"
+      },
+      "thumb": "/videos/lofi-02.jpg"
+    },
+    {
+      "id": "lofi-03",
+      "title": "lofi-03",
+      "sources": {
+        "webm": "/videos/lofi-03.webm",
+        "mp4": "/videos/lofi-03.mp4"
+      },
+      "thumb": "/videos/lofi-03.jpg"
+    },
+    {
+      "id": "lofi-04",
+      "title": "lofi-04",
+      "sources": {
+        "webm": "/videos/lofi-04.webm",
+        "mp4": "/videos/lofi-04.mp4"
+      },
+      "thumb": "/videos/lofi-04.jpg"
+    },
+    {
+      "id": "lofi-05",
+      "title": "lofi-05",
+      "sources": {
+        "webm": "/videos/lofi-05.webm",
+        "mp4": "/videos/lofi-05.mp4"
+      },
+      "thumb": "/videos/lofi-05.jpg"
+    },
+    {
+      "id": "lofi-06",
+      "title": "lofi-06",
+      "sources": {
+        "webm": "/videos/lofi-06.webm",
+        "mp4": "/videos/lofi-06.mp4"
+      },
+      "thumb": "/videos/lofi-06.jpg"
+    },
+    {
+      "id": "lofi-07",
+      "title": "lofi-07",
+      "sources": {
+        "webm": "/videos/lofi-07.webm",
+        "mp4": "/videos/lofi-07.mp4"
+      },
+      "thumb": "/videos/lofi-07.jpg"
+    }
+  ]
+}
