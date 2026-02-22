@@ -1,7 +1,8 @@
-import { Pause, Play, RotateCcw, Settings } from "lucide-react";
+import { Music2, Pause, Play, RotateCcw, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Timer from "./Timer";
 import SettingsModal from "./SettingsModal";
+import MusicModal from "./MusicModal";
 import usePomodoroEngine from "../hooks/usePomodoroEngine";
 import type { Session } from "../hooks/usePomodoroEngine";
 import useNotificationCenter from "../hooks/useNotificationCenter";
@@ -17,6 +18,39 @@ type ControlDockProps = {
 type DockCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
 type Point = { x: number; y: number };
 const SNAP_MARGIN = 20;
+type MusicTab = "lofi" | "mix" | "upbeat";
+type MusicTrack = { title: string; src: string };
+
+const toSrc = (folder: MusicTab, fileName: string) =>
+  encodeURI(`/sounds/${folder}/${fileName}`);
+
+const MUSIC_LIBRARY: Record<MusicTab, MusicTrack[]> = {
+  lofi: [
+    { title: "Late at Night", src: toSrc("lofi", "Late-at-Night(chosic.com).mp3") },
+    { title: "Little Wishes", src: toSrc("lofi", "Little-Wishes-chosic.com_.mp3") },
+    { title: "Nocturnal Windowpane", src: toSrc("lofi", "nocturnal-windowpane.mp3") },
+    { title: "Rainy Afternoon Chords", src: toSrc("lofi", "rainy-afternoon-chords.mp3") },
+    { title: "Rainy Day Contemplation", src: toSrc("lofi", "rainy-day-contemplation.mp3") },
+    { title: "Day Off", src: toSrc("lofi", "tokyo-music-walker-day-off-chosic.com_.mp3") },
+  ],
+  mix: [
+    { title: "The Feeling", src: toSrc("mix", "AgusAlvarez & Luke Bergs - The Feeling (freetouse.com).mp3") },
+    { title: "Last Summer", src: toSrc("mix", "Aylex - Last Summer (freetouse.com).mp3") },
+    { title: "Chances", src: toSrc("mix", "Burgundy - Chances (freetouse.com).mp3") },
+    { title: "Sweet Talks", src: toSrc("mix", "Limujii - Sweet Talks (freetouse.com).mp3") },
+    { title: "Follow The Sun", src: toSrc("mix", "Luke Bergs & Waesto - Follow The Sun (freetouse.com).mp3") },
+    { title: "Rose", src: toSrc("mix", "Lukrembo - Rose (freetouse.com).mp3") },
+    { title: "Gingersweet", src: toSrc("mix", "massobeats - gingersweet (freetouse.com).mp3") },
+    { title: "Enlivening", src: toSrc("mix", "Pufino - Enlivening (freetouse.com).mp3") },
+    { title: "Way Back", src: toSrc("mix", "Zambolino - Way Back (freetouse.com).mp3") },
+  ],
+  upbeat: [
+    { title: "Moonbeam Funk Parade", src: toSrc("upbeat", "moonbeam-funk-parade.mp3") },
+    { title: "Neon Groove", src: toSrc("upbeat", "neon-groove.mp3") },
+    { title: "Summer Drive", src: toSrc("upbeat", "summer-drive.mp3") },
+    { title: "Virtual Dawnline", src: toSrc("upbeat", "virtual-dawnline.mp3") },
+  ],
+};
 
 const getCornerPosition = (
   corner: DockCorner,
@@ -88,9 +122,24 @@ export default function ControlDock({
   } = usePomodoroEngine();
   const [dockCorner, setDockCorner] = useState<DockCorner>("center");
   const [open, setOpen] = useState(false);
+  const [musicOpen, setMusicOpen] = useState(false);
+  const [musicTab, setMusicTab] = useState<MusicTab>("lofi");
+  const [selectedTrackIndexByTab, setSelectedTrackIndexByTab] = useState<Record<MusicTab, number>>({
+    lofi: 0,
+    mix: 0,
+    upbeat: 0,
+  });
+  const [musicVolume, setMusicVolume] = useState(0.45);
+  const [loopEnabled, setLoopEnabled] = useState(true);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [nowPlayingTitle, setNowPlayingTitle] = useState<string | null>(null);
+  const [nowPlayingSrc, setNowPlayingSrc] = useState<string | null>(null);
+  const [nowPlayingTab, setNowPlayingTab] = useState<MusicTab | null>(null);
+  const [nowPlayingIndex, setNowPlayingIndex] = useState(0);
   const [dockPos, setDockPos] = useState<Point>({ x: SNAP_MARGIN, y: SNAP_MARGIN });
   const [isDragging, setIsDragging] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
   const {
     toast,
@@ -103,6 +152,133 @@ export default function ControlDock({
     if (mode !== "playing") await ensureNotificationPermission();
     setMode(mode === "playing" ? "paused" : "playing");
   };
+
+  const tracks = MUSIC_LIBRARY[musicTab];
+  const currentTrackIndex = selectedTrackIndexByTab[musicTab] ?? 0;
+  const currentTrack = tracks[currentTrackIndex] ?? tracks[0];
+
+  useEffect(() => {
+    const audio = new Audio();
+    audio.loop = loopEnabled;
+    audio.preload = "metadata";
+    audio.volume = musicVolume;
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.src = "";
+      audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.loop = loopEnabled;
+  }, [loopEnabled]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.volume = musicVolume;
+  }, [musicVolume]);
+
+  const toggleMusic = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isMusicPlaying) {
+      audio.pause();
+      setIsMusicPlaying(false);
+      return;
+    }
+    const hasLoadedTrack = Boolean(nowPlayingSrc) && Boolean(audio.currentSrc);
+    if (!hasLoadedTrack && currentTrack) {
+      audio.src = currentTrack.src;
+      audio.load();
+      setNowPlayingTitle(currentTrack.title);
+      setNowPlayingSrc(currentTrack.src);
+      setNowPlayingTab(musicTab);
+      setNowPlayingIndex(currentTrackIndex);
+    }
+    try {
+      await audio.play();
+      setIsMusicPlaying(true);
+    } catch {
+      showToast("Browser blocked autoplay. Press play again.");
+      setIsMusicPlaying(false);
+    }
+  };
+
+  const selectTrack = async (index: number) => {
+    setSelectedTrackIndexByTab((prev) => ({ ...prev, [musicTab]: index }));
+    setIsMusicPlaying(true);
+    const audio = audioRef.current;
+    if (!audio) return;
+    try {
+      audio.src = tracks[index].src;
+      audio.load();
+      await audio.play();
+      setIsMusicPlaying(true);
+      setNowPlayingTitle(tracks[index].title);
+      setNowPlayingSrc(tracks[index].src);
+      setNowPlayingTab(musicTab);
+      setNowPlayingIndex(index);
+    } catch {
+      setIsMusicPlaying(false);
+      showToast("Could not play this track");
+    }
+  };
+
+  const selectTrackSilently = (index: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const nextTrack = tracks[index];
+    if (!nextTrack) return;
+    setSelectedTrackIndexByTab((prev) => ({ ...prev, [musicTab]: index }));
+    audio.src = nextTrack.src;
+    audio.load();
+    audio.pause();
+    setIsMusicPlaying(false);
+    setNowPlayingTitle(nextTrack.title);
+    setNowPlayingSrc(nextTrack.src);
+    setNowPlayingTab(musicTab);
+    setNowPlayingIndex(index);
+  };
+
+  const cycleTrack = (direction: 1 | -1) => {
+    if (tracks.length === 0) return;
+    const baseIndex = selectedTrackIndexByTab[musicTab] ?? 0;
+    const nextIndex = (baseIndex + direction + tracks.length) % tracks.length;
+    if (isMusicPlaying) {
+      void selectTrack(nextIndex);
+      return;
+    }
+    selectTrackSilently(nextIndex);
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onEnded = async () => {
+      if (loopEnabled || !isMusicPlaying || !nowPlayingTab) return;
+      const tabTracks = MUSIC_LIBRARY[nowPlayingTab];
+      if (!tabTracks || tabTracks.length === 0) return;
+      const nextIndex = (nowPlayingIndex + 1) % tabTracks.length;
+      const nextTrack = tabTracks[nextIndex];
+      setSelectedTrackIndexByTab((prev) => ({ ...prev, [nowPlayingTab]: nextIndex }));
+      setNowPlayingTitle(nextTrack.title);
+      setNowPlayingSrc(nextTrack.src);
+      setNowPlayingTab(nowPlayingTab);
+      setNowPlayingIndex(nextIndex);
+      audio.src = nextTrack.src;
+      audio.load();
+      try {
+        await audio.play();
+      } catch {
+        setIsMusicPlaying(false);
+        showToast("Could not auto-play next track");
+      }
+    };
+    audio.addEventListener("ended", onEnded);
+    return () => audio.removeEventListener("ended", onEnded);
+  }, [isMusicPlaying, loopEnabled, nowPlayingIndex, nowPlayingTab, showToast]);
 
   useEffect(() => {
     const format = (ms: number) => {
@@ -133,6 +309,38 @@ export default function ControlDock({
         return;
       }
 
+      if (event.code === "KeyS") {
+        event.preventDefault();
+        if (musicOpen && !open) setMusicOpen(false);
+        setOpen((prev) => !prev);
+        return;
+      }
+
+      if (event.code === "KeyM") {
+        event.preventDefault();
+        if (open && !musicOpen) setOpen(false);
+        setMusicOpen((prev) => !prev);
+        return;
+      }
+
+      if (event.code === "KeyP") {
+        event.preventDefault();
+        void toggleMusic();
+        return;
+      }
+
+      if (event.code === "ArrowUp") {
+        event.preventDefault();
+        cycleTrack(-1);
+        return;
+      }
+
+      if (event.code === "ArrowDown") {
+        event.preventDefault();
+        cycleTrack(1);
+        return;
+      }
+
       if (event.code !== "Space") return;
       event.preventDefault();
       void togglePlayback();
@@ -140,7 +348,7 @@ export default function ControlDock({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [mode, resetToBase]);
+  }, [mode, resetToBase, musicTab, currentTrackIndex, isMusicPlaying, musicOpen, open, selectedTrackIndexByTab]);
 
   const handleTimerComplete = () => {
     const completedSession = completeCurrentSession();
@@ -214,7 +422,7 @@ export default function ControlDock({
   }, [dockCorner, isDragging]);
 
   const startDockDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (open) return;
+    if (open || musicOpen) return;
     const target = event.target as HTMLElement;
     const blocked = target.closest(
       "button, input, textarea, select, [role='checkbox'], [data-no-drag='true']"
@@ -233,11 +441,11 @@ export default function ControlDock({
   };
 
   useEffect(() => {
-    if (open) {
+    if (open || musicOpen) {
       dragRef.current = null;
       setIsDragging(false);
     }
-  }, [open]);
+  }, [open, musicOpen]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -286,7 +494,7 @@ export default function ControlDock({
           ref={panelRef}
           onPointerDown={startDockDrag}
           className={`absolute flex flex-col gap-6 p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-2xl border border-white/20 ${
-            open ? "pointer-events-none" : "pointer-events-auto"
+            open || musicOpen ? "pointer-events-none" : "pointer-events-auto"
           } ${
             isDragging ? "cursor-grabbing select-none" : "cursor-grab"
           }`}
@@ -336,6 +544,13 @@ export default function ControlDock({
               data-no-drag="true"
             >
               <Settings className="w-6 h-6 text-white" />
+            </button>
+            <button
+              className={`p-2 rounded-full ${musicOpen ? "bg-white/20" : "bg-white/10 hover:bg-white/20"}`}
+              onClick={() => setMusicOpen(true)}
+              data-no-drag="true"
+            >
+              <Music2 className="w-6 h-6 text-white" />
             </button>
           </div>
         </div>
@@ -389,6 +604,29 @@ export default function ControlDock({
         wallpapers={wallpapers}
         selectedWallpaper={background}
         onSelectWallpaper={onChangeBackground}
+      />
+
+      <MusicModal
+        open={musicOpen}
+        onClose={() => setMusicOpen(false)}
+        tabs={["lofi", "mix", "upbeat"]}
+        activeTab={musicTab}
+        onChangeTab={setMusicTab}
+        tracks={tracks}
+        currentTrackIndex={currentTrackIndex}
+        isPlaying={isMusicPlaying}
+        onTogglePlay={() => {
+          void toggleMusic();
+        }}
+        onSelectTrack={(index) => {
+          void selectTrack(index);
+        }}
+        volume={musicVolume}
+        onChangeVolume={setMusicVolume}
+        nowPlayingTitle={nowPlayingTitle}
+        nowPlayingSrc={nowPlayingSrc}
+        loopEnabled={loopEnabled}
+        onToggleLoop={() => setLoopEnabled((prev) => !prev)}
       />
 
       {toast && (
