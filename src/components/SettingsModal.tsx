@@ -283,7 +283,7 @@ export default function SettingsModal({
 
               <BackgroundPanel title="Lofi Motion">
                 <div className="grid grid-cols-2 gap-2 max-h-56 overflow-auto pr-1">
-                  {videoBackgrounds.map((video) => {
+                  {videoBackgrounds.map((video, index) => {
                     const src = video.webm ?? video.mp4;
                     if (!src) return null;
                     const selected = src === selectedWallpaper;
@@ -296,7 +296,8 @@ export default function SettingsModal({
                         <img
                           src={video.thumb}
                           alt={video.title}
-                          loading="lazy"
+                          loading="eager"
+                          fetchPriority={index < 8 ? "high" : "auto"}
                           decoding="async"
                           className={`h-20 w-full object-cover transition-transform duration-200 ${
                             selected ? "scale-105" : "group-hover:scale-[1.02]"

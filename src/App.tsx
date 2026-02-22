@@ -116,10 +116,6 @@ export default function App() {
         const image = new Image();
         image.src = wallpaper.thumb ?? wallpaper.src;
       }
-      for (const video of videoBackgrounds) {
-        const image = new Image();
-        image.src = video.thumb;
-      }
     };
     const idleCallback = (window as Window & {
       requestIdleCallback?: (callback: () => void) => number;
@@ -134,6 +130,29 @@ export default function App() {
     const timerId = window.setTimeout(preload, 120);
     return () => window.clearTimeout(timerId);
   }, [wallpapers, videoBackgrounds]);
+
+  useEffect(() => {
+    if (videoBackgrounds.length === 0) return;
+    const links: HTMLLinkElement[] = [];
+    for (const video of videoBackgrounds) {
+      const preloadLink = document.createElement("link");
+      preloadLink.rel = "preload";
+      preloadLink.as = "image";
+      preloadLink.href = video.thumb;
+      document.head.appendChild(preloadLink);
+      links.push(preloadLink);
+
+      const image = new Image();
+      image.decoding = "async";
+      (image as HTMLImageElement & { fetchPriority?: "high" | "low" | "auto" }).fetchPriority = "high";
+      image.src = video.thumb;
+    }
+    return () => {
+      for (const link of links) {
+        if (link.parentNode) link.parentNode.removeChild(link);
+      }
+    };
+  }, [videoBackgrounds]);
 
   // persist whenever it changes
   useEffect(() => {
