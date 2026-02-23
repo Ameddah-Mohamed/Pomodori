@@ -144,6 +144,9 @@ export default function ControlDock({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
+  const titleModeRef = useRef(mode);
+  const titleRemainingRef = useRef(remainingMs);
+  const titleSyncedAtRef = useRef(Date.now());
   const {
     toast,
     showToast,
@@ -308,6 +311,15 @@ export default function ControlDock({
   }, [isMusicPlaying, loopEnabled, nowPlayingIndex, nowPlayingTab, showToast]);
 
   useEffect(() => {
+    titleModeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    titleRemainingRef.current = remainingMs;
+    titleSyncedAtRef.current = Date.now();
+  }, [remainingMs]);
+
+  useEffect(() => {
     const format = (ms: number) => {
       const totalSec = Math.floor(ms / 1000);
       const s = totalSec % 60;
@@ -316,8 +328,21 @@ export default function ControlDock({
       const pad = (n: number) => String(n).padStart(2, "0");
       return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
     };
-    document.title = mode === "playing" ? format(remainingMs) : "Pomodori <3";
-  }, [mode, remainingMs]);
+
+    const updateTitle = () => {
+      if (titleModeRef.current !== "playing") {
+        document.title = "Pomodori <3";
+        return;
+      }
+      const elapsed = Date.now() - titleSyncedAtRef.current;
+      const derivedRemaining = Math.max(0, titleRemainingRef.current - elapsed);
+      document.title = format(derivedRemaining);
+    };
+
+    updateTitle();
+    const id = window.setInterval(updateTitle, 250);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
