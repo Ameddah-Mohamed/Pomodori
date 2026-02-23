@@ -132,7 +132,7 @@ export default function ControlDock({
     upbeat: 0,
   });
   const [musicVolume, setMusicVolume] = useState(0.45);
-  const [loopEnabled, setLoopEnabled] = useState(true);
+  const [loopEnabled, setLoopEnabled] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [nowPlayingTitle, setNowPlayingTitle] = useState<string | null>(null);
   const [nowPlayingSrc, setNowPlayingSrc] = useState<string | null>(null);
