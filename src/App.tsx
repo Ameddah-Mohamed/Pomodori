@@ -34,7 +34,8 @@ const isVideoManifestItem = (value: unknown): value is VideoManifestItem => {
 };
 
 export default function App() {
-  const [manifestReady, setManifestReady] = useState(false);
+  const [imageManifestReady, setImageManifestReady] = useState(false);
+  const [videoManifestReady, setVideoManifestReady] = useState(false);
   const [wallpapers, setWallpapers] = useState<Wallpaper[]>(FALLBACK_WALLPAPERS);
   const [videoBackgrounds, setVideoBackgrounds] = useState<VideoBackground[]>([]);
 
@@ -58,10 +59,11 @@ export default function App() {
         const parsed = data.filter(isWallpaper);
         if (!cancelled && parsed.length > 0) {
           setWallpapers(parsed);
-          setManifestReady(true);
         }
       } catch {
         // Keep fallback wallpapers.
+      } finally {
+        if (!cancelled) setImageManifestReady(true);
       }
     };
     void loadManifest();
@@ -92,6 +94,8 @@ export default function App() {
         if (!cancelled) setVideoBackgrounds(parsed);
       } catch {
         // Optional feature; keep image backgrounds only.
+      } finally {
+        if (!cancelled) setVideoManifestReady(true);
       }
     };
     void loadVideoManifest();
@@ -101,13 +105,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!manifestReady || wallpapers.length === 0) return;
+    if (!imageManifestReady || !videoManifestReady || wallpapers.length === 0) return;
     const bgExists =
       wallpapers.some((item) => item.src === bg) ||
       videoBackgrounds.some((item) => item.webm === bg || item.mp4 === bg);
     if (bgExists) return;
     setBg(wallpapers[0].src);
-  }, [bg, manifestReady, wallpapers, videoBackgrounds]);
+  }, [bg, imageManifestReady, videoManifestReady, wallpapers, videoBackgrounds]);
 
   useEffect(() => {
     if (wallpapers.length === 0 && videoBackgrounds.length === 0) return;

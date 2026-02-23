@@ -4,6 +4,7 @@ import Timer from "./Timer";
 import SettingsModal from "./SettingsModal";
 import MusicModal from "./MusicModal";
 import usePomodoroEngine from "../hooks/usePomodoroEngine";
+import usePersistentState from "../hooks/usePersistentState";
 import type { Session } from "../hooks/usePomodoroEngine";
 import useNotificationCenter from "../hooks/useNotificationCenter";
 import useLongPressReset from "../hooks/useLongPressReset";
@@ -132,7 +133,7 @@ export default function ControlDock({
     upbeat: 0,
   });
   const [musicVolume, setMusicVolume] = useState(0.45);
-  const [loopEnabled, setLoopEnabled] = useState(false);
+  const [loopEnabled, setLoopEnabled] = usePersistentState<boolean>("pomodoro:musicLoop", false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [nowPlayingTitle, setNowPlayingTitle] = useState<string | null>(null);
   const [nowPlayingSrc, setNowPlayingSrc] = useState<string | null>(null);
