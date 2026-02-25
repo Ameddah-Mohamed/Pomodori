@@ -56,5 +56,9 @@ export default function Timer({ duration, state, onComplete, onTick }: TimerProp
     return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
   };
 
-  return <div className="text-gray-200 font-bold text-7xl">{format(time)}</div>;
+  return (
+    <div className="text-gray-200 font-bold text-6xl sm:text-7xl leading-none tabular-nums">
+      {format(time)}
+    </div>
+  );
 }

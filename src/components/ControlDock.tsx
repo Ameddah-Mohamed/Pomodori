@@ -480,6 +480,7 @@ export default function ControlDock({
   }, [dockCorner, isDragging]);
 
   const startDockDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (window.innerWidth < 640) return;
     if (open || musicOpen) return;
     const target = event.target as HTMLElement;
     const blocked = target.closest(
@@ -551,7 +552,7 @@ export default function ControlDock({
         <div
           ref={panelRef}
           onPointerDown={startDockDrag}
-          className={`absolute flex flex-col gap-6 p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-2xl border border-white/20 ${
+          className={`absolute w-[min(92vw,980px)] sm:w-auto max-h-[calc(100vh-2rem)] overflow-y-auto flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-2xl border border-white/20 ${
             open || musicOpen ? "pointer-events-none" : "pointer-events-auto"
           } ${
             isDragging ? "cursor-grabbing select-none" : "cursor-grab"
@@ -564,7 +565,7 @@ export default function ControlDock({
               : "left 280ms cubic-bezier(0.2, 0.9, 0.2, 1), top 280ms cubic-bezier(0.2, 0.9, 0.2, 1)",
           }}
         >
-        <div className="flex items-center gap-4 justify-around">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-between">
           <Timer
             key={timerKey}
             duration={duration}
@@ -582,9 +583,9 @@ export default function ControlDock({
               data-no-drag="true"
             >
               {mode === "playing" ? (
-                <Pause className="w-6 h-6 text-white" />
+                <Pause className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               ) : (
-                <Play className="w-6 h-6 text-white" />
+                <Play className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               )}
             </button>
 
@@ -593,7 +594,7 @@ export default function ControlDock({
               onClick={resetToBase}
               data-no-drag="true"
             >
-              <RotateCcw className="w-6 h-6 text-white" />
+              <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </button>
 
             <button
@@ -601,22 +602,22 @@ export default function ControlDock({
               onClick={() => setOpen(true)}
               data-no-drag="true"
             >
-              <Settings className="w-6 h-6 text-white" />
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </button>
             <button
               className={`p-2 rounded-full ${musicOpen ? "bg-white/20" : "bg-white/10 hover:bg-white/20"}`}
               onClick={() => setMusicOpen(true)}
               data-no-drag="true"
             >
-              <Music2 className="w-6 h-6 text-white" />
+              <Music2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </button>
           </div>
         </div>
 
-        <div className="flex justify-center gap-3 items-center">
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 items-center">
           {/* Session Counter */}
           <div
-            className="relative h-12 w-12 rounded-full grid place-items-center cursor-pointer"
+            className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-full grid place-items-center cursor-pointer"
             style={ringStyle}
             onPointerDown={beginHold}
             onPointerUp={endHold}
@@ -624,8 +625,8 @@ export default function ControlDock({
             onPointerLeave={endHold}
             data-no-drag="true"
           >
-            <div className="h-10 w-10 rounded-full grid place-items-center bg-white/10 backdrop-blur-md border border-white/20">
-              <span className="text-white font-semibold">{sessionCounter}</span>
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full grid place-items-center bg-white/10 backdrop-blur-md border border-white/20">
+              <span className="text-white font-semibold text-sm sm:text-base">{sessionCounter}</span>
             </div>
           </div>
 
@@ -635,7 +636,7 @@ export default function ControlDock({
               key={s}
               className={`px-4 py-2 rounded-lg ${
                 session === s ? "bg-white/20" : "bg-white/10 hover:bg-white/20"
-              } text-white`}
+              } text-white text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2`}
               onClick={() => setSession(s)}
               data-no-drag="true"
             >

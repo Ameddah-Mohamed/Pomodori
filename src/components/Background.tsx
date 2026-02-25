@@ -138,7 +138,7 @@ export default function Background({ src, fadeDuration = 800 }: BackgroundProps)
           muted
           playsInline
           preload="auto"
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          className="absolute -inset-px w-[calc(100%+2px)] h-[calc(100%+2px)] object-cover"
           style={{
             opacity: pendingSrc && pendingVisible ? 0 : 1,
             transition: pendingSrc ? `opacity ${transitionMs}ms ease` : "none",
@@ -154,7 +154,7 @@ export default function Background({ src, fadeDuration = 800 }: BackgroundProps)
             opacity: pendingSrc && pendingVisible ? 0 : 1,
             transition: pendingSrc ? `opacity ${transitionMs}ms ease` : "none",
           }}
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          className="absolute -inset-px w-[calc(100%+2px)] h-[calc(100%+2px)] object-cover"
         />
       )}
       {pendingSrc && (
@@ -180,7 +180,7 @@ export default function Background({ src, fadeDuration = 800 }: BackgroundProps)
               transition: `opacity ${transitionMs}ms ease`,
               opacity: pendingVisible ? 1 : 0,
             }}
-            className="absolute top-0 left-0 w-full h-full object-cover"
+            className="absolute -inset-px w-[calc(100%+2px)] h-[calc(100%+2px)] object-cover"
           />
         ) : (
           <img
@@ -192,7 +192,7 @@ export default function Background({ src, fadeDuration = 800 }: BackgroundProps)
               transition: `opacity ${transitionMs}ms ease`,
               opacity: pendingVisible ? 1 : 0,
             }}
-            className="absolute top-0 left-0 w-full h-full object-cover"
+            className="absolute -inset-px w-[calc(100%+2px)] h-[calc(100%+2px)] object-cover"
           />
         )
       )}

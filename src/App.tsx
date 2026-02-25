@@ -178,8 +178,11 @@ export default function App() {
       />
 
       {/* footer */}
-      <div className="fixed bottom-4 w-full flex justify-center">
-        <p className="text-white text-center text-sm bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg">
+      <div
+        className="fixed bottom-4 w-full flex justify-center px-3"
+        style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      >
+        <p className="text-white text-center text-xs sm:text-sm bg-white/10 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full border border-white/20 shadow-lg">
           Made with ❤️ by <span className="font-semibold">Ameddah Mohamed</span>
         </p>
       </div>
