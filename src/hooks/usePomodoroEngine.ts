@@ -182,15 +182,24 @@ export default function usePomodoroEngine() {
 
   const completeCurrentSession = () => {
     const completedSession = session;
+    const nextSession =
+      completedSession === "focus"
+        ? (sessionCounter + 1) % 3 === 0
+          ? "long"
+          : "short"
+        : "focus";
+    const nextDuration = getSessionDurationMs(nextSession, durationsMin);
+
+    skipSessionResetRef.current = true;
     setMode("paused");
-    setRemainingMs(0);
     if (completedSession === "focus") {
       const nextCounter = sessionCounter + 1;
       setSessionCounter(nextCounter);
-      setSession(nextCounter % 3 === 0 ? "long" : "short");
-    } else {
-      setSession("focus");
     }
+    setSession(nextSession);
+    setDuration(nextDuration);
+    setRemainingMs(nextDuration);
+    setTimerKey((k) => k + 1);
     return completedSession;
   };
 
