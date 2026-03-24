@@ -54,6 +54,12 @@ const MUSIC_LIBRARY: Record<MusicTab, MusicTrack[]> = {
   ],
 };
 
+const SESSION_END_SOUNDS: Record<Session, string> = {
+  focus: "/sounds/session/focus-complete.mp3",
+  short: "/sounds/session/short-break-complete.mp3",
+  long: "/sounds/session/long-break-complete.mp3",
+};
+
 const getCornerPosition = (
   corner: DockCorner,
   width: number,
@@ -134,6 +140,10 @@ export default function ControlDock({
   });
   const [musicVolume, setMusicVolume] = useState(0.45);
   const [loopEnabled, setLoopEnabled] = usePersistentState<boolean>("pomodoro:musicLoop", false);
+  const [sessionEndSoundsEnabled, setSessionEndSoundsEnabled] = usePersistentState<boolean>(
+    "pomodoro:sessionEndSoundsEnabled",
+    true
+  );
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [nowPlayingTitle, setNowPlayingTitle] = useState<string | null>(null);
   const [nowPlayingSrc, setNowPlayingSrc] = useState<string | null>(null);
@@ -143,6 +153,7 @@ export default function ControlDock({
   const [isDragging, setIsDragging] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const sessionSoundRef = useRef<HTMLAudioElement | null>(null);
   const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
   const titleModeRef = useRef(mode);
   const titleRemainingRef = useRef(remainingMs);
@@ -197,6 +208,17 @@ export default function ControlDock({
       audio.pause();
       audio.src = "";
       audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = new Audio();
+    audio.preload = "auto";
+    sessionSoundRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.src = "";
+      sessionSoundRef.current = null;
     };
   }, []);
 
@@ -410,6 +432,15 @@ export default function ControlDock({
 
   const handleTimerComplete = () => {
     const completedSession = completeCurrentSession();
+    if (sessionEndSoundsEnabled && sessionSoundRef.current) {
+      const sound = sessionSoundRef.current;
+      sound.pause();
+      sound.currentTime = 0;
+      sound.src = SESSION_END_SOUNDS[completedSession];
+      void sound.play().catch(() => {
+        showToast("Could not play session end sound");
+      });
+    }
     notifySessionEnd(completedSession);
   };
 
@@ -427,17 +458,20 @@ export default function ControlDock({
     shortMin,
     longMin,
     resumeEnabled: nextResumeEnabled,
+    sessionEndSoundsEnabled: nextSessionEndSoundsEnabled,
   }: {
     focusMin: number;
     shortMin: number;
     longMin: number;
     resumeEnabled: boolean;
+    sessionEndSoundsEnabled: boolean;
   }) => {
     applySettings({
       focusMin,
       shortMin,
       longMin,
       resumeEnabled: nextResumeEnabled,
+      sessionEndSoundsEnabled: nextSessionEndSoundsEnabled,
     });
     showToast("Timer settings saved");
   };
@@ -447,14 +481,17 @@ export default function ControlDock({
     shortMin,
     longMin,
     resumeEnabled: nextResumeEnabled,
+    sessionEndSoundsEnabled: nextSessionEndSoundsEnabled,
   }: {
     focusMin: number;
     shortMin: number;
     longMin: number;
     resumeEnabled: boolean;
+    sessionEndSoundsEnabled: boolean;
   }) => {
     saveDurations({ focusMin, shortMin, longMin });
     setResumeEnabled(nextResumeEnabled);
+    setSessionEndSoundsEnabled(nextSessionEndSoundsEnabled);
   };
 
   useLayoutEffect(() => {
@@ -658,6 +695,7 @@ export default function ControlDock({
         initialShortMin={durationsMin.shortMin}
         initialLongMin={durationsMin.longMin}
         initialResumeEnabled={resumeEnabled}
+        initialSessionEndSoundsEnabled={sessionEndSoundsEnabled}
         onSave={handleSaveSettings}
         onRealtimeChange={applySettings}
         wallpapers={wallpapers}

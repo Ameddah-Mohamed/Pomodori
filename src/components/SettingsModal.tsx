@@ -11,17 +11,20 @@ type SettingsModalProps = {
   initialShortMin: number;
   initialLongMin: number;
   initialResumeEnabled: boolean;
+  initialSessionEndSoundsEnabled: boolean;
   onSave: (p: {
     focusMin: number;
     shortMin: number;
     longMin: number;
     resumeEnabled: boolean;
+    sessionEndSoundsEnabled: boolean;
   }) => void;
   onRealtimeChange: (p: {
     focusMin: number;
     shortMin: number;
     longMin: number;
     resumeEnabled: boolean;
+    sessionEndSoundsEnabled: boolean;
   }) => void;
 
   wallpapers: Wallpaper[];
@@ -37,6 +40,7 @@ export default function SettingsModal({
   initialShortMin,
   initialLongMin,
   initialResumeEnabled,
+  initialSessionEndSoundsEnabled,
   onSave,
   onRealtimeChange,
   wallpapers,
@@ -51,6 +55,9 @@ export default function SettingsModal({
   const [shortMin, setShortMin] = useState<number>(initialShortMin);
   const [longMin, setLongMin] = useState<number>(initialLongMin);
   const [resumeEnabled, setResumeEnabled] = useState<boolean>(initialResumeEnabled);
+  const [sessionEndSoundsEnabled, setSessionEndSoundsEnabled] = useState<boolean>(
+    initialSessionEndSoundsEnabled
+  );
   const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
@@ -80,6 +87,7 @@ export default function SettingsModal({
     setShortMin(initialShortMin);
     setLongMin(initialLongMin);
     setResumeEnabled(initialResumeEnabled);
+    setSessionEndSoundsEnabled(initialSessionEndSoundsEnabled);
     setShowInfo(false);
   }, [
     open,
@@ -87,6 +95,7 @@ export default function SettingsModal({
     initialShortMin,
     initialLongMin,
     initialResumeEnabled,
+    initialSessionEndSoundsEnabled,
   ]);
   const close = (reason?: string) => onClose(reason ?? "close");
   const clamp = (n: number, min = 1, max = 180) =>
@@ -96,6 +105,7 @@ export default function SettingsModal({
     shortMin: clamp(shortMin),
     longMin: clamp(longMin),
     resumeEnabled,
+    sessionEndSoundsEnabled,
   });
 
   const handleSave = () => {
@@ -114,6 +124,7 @@ export default function SettingsModal({
     shortMin,
     longMin,
     resumeEnabled,
+    sessionEndSoundsEnabled,
   ]);
 
   if (!shouldRender) return null;
@@ -234,6 +245,22 @@ export default function SettingsModal({
               onClick={() => setResumeEnabled((prev) => !prev)}
               className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${
                 resumeEnabled
+                  ? "border-white/80 bg-white text-black"
+                  : "border-white/50 bg-white/10 text-transparent"
+              }`}
+            >
+              <Check className="h-4 w-4" />
+            </button>
+          </label>
+          <label className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-3">
+            <span className="text-sm text-white/90">Play sound when a session ends</span>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={sessionEndSoundsEnabled}
+              onClick={() => setSessionEndSoundsEnabled((prev) => !prev)}
+              className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${
+                sessionEndSoundsEnabled
                   ? "border-white/80 bg-white text-black"
                   : "border-white/50 bg-white/10 text-transparent"
               }`}
