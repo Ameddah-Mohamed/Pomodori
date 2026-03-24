@@ -144,6 +144,10 @@ export default function ControlDock({
     "pomodoro:sessionEndSoundsEnabled",
     true
   );
+  const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = usePersistentState<boolean>(
+    "pomodoro:keyboardShortcutsEnabled",
+    true
+  );
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [nowPlayingTitle, setNowPlayingTitle] = useState<string | null>(null);
   const [nowPlayingSrc, setNowPlayingSrc] = useState<string | null>(null);
@@ -368,6 +372,7 @@ export default function ControlDock({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!keyboardShortcutsEnabled) return;
       const target = event.target as HTMLElement | null;
       const tagName = target?.tagName;
       const isTypingTarget =
@@ -428,7 +433,17 @@ export default function ControlDock({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [mode, resetToBase, musicTab, currentTrackIndex, isMusicPlaying, musicOpen, open, selectedTrackIndexByTab]);
+  }, [
+    keyboardShortcutsEnabled,
+    mode,
+    resetToBase,
+    musicTab,
+    currentTrackIndex,
+    isMusicPlaying,
+    musicOpen,
+    open,
+    selectedTrackIndexByTab,
+  ]);
 
   const handleTimerComplete = () => {
     const completedSession = completeCurrentSession();
@@ -459,12 +474,14 @@ export default function ControlDock({
     longMin,
     resumeEnabled: nextResumeEnabled,
     sessionEndSoundsEnabled: nextSessionEndSoundsEnabled,
+    keyboardShortcutsEnabled: nextKeyboardShortcutsEnabled,
   }: {
     focusMin: number;
     shortMin: number;
     longMin: number;
     resumeEnabled: boolean;
     sessionEndSoundsEnabled: boolean;
+    keyboardShortcutsEnabled: boolean;
   }) => {
     applySettings({
       focusMin,
@@ -472,6 +489,7 @@ export default function ControlDock({
       longMin,
       resumeEnabled: nextResumeEnabled,
       sessionEndSoundsEnabled: nextSessionEndSoundsEnabled,
+      keyboardShortcutsEnabled: nextKeyboardShortcutsEnabled,
     });
     showToast("Timer settings saved");
   };
@@ -482,16 +500,19 @@ export default function ControlDock({
     longMin,
     resumeEnabled: nextResumeEnabled,
     sessionEndSoundsEnabled: nextSessionEndSoundsEnabled,
+    keyboardShortcutsEnabled: nextKeyboardShortcutsEnabled,
   }: {
     focusMin: number;
     shortMin: number;
     longMin: number;
     resumeEnabled: boolean;
     sessionEndSoundsEnabled: boolean;
+    keyboardShortcutsEnabled: boolean;
   }) => {
     saveDurations({ focusMin, shortMin, longMin });
     setResumeEnabled(nextResumeEnabled);
     setSessionEndSoundsEnabled(nextSessionEndSoundsEnabled);
+    setKeyboardShortcutsEnabled(nextKeyboardShortcutsEnabled);
   };
 
   useLayoutEffect(() => {
@@ -696,6 +717,7 @@ export default function ControlDock({
         initialLongMin={durationsMin.longMin}
         initialResumeEnabled={resumeEnabled}
         initialSessionEndSoundsEnabled={sessionEndSoundsEnabled}
+        initialKeyboardShortcutsEnabled={keyboardShortcutsEnabled}
         onSave={handleSaveSettings}
         onRealtimeChange={applySettings}
         wallpapers={wallpapers}

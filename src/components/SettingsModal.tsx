@@ -12,12 +12,14 @@ type SettingsModalProps = {
   initialLongMin: number;
   initialResumeEnabled: boolean;
   initialSessionEndSoundsEnabled: boolean;
+  initialKeyboardShortcutsEnabled: boolean;
   onSave: (p: {
     focusMin: number;
     shortMin: number;
     longMin: number;
     resumeEnabled: boolean;
     sessionEndSoundsEnabled: boolean;
+    keyboardShortcutsEnabled: boolean;
   }) => void;
   onRealtimeChange: (p: {
     focusMin: number;
@@ -25,6 +27,7 @@ type SettingsModalProps = {
     longMin: number;
     resumeEnabled: boolean;
     sessionEndSoundsEnabled: boolean;
+    keyboardShortcutsEnabled: boolean;
   }) => void;
 
   wallpapers: Wallpaper[];
@@ -41,6 +44,7 @@ export default function SettingsModal({
   initialLongMin,
   initialResumeEnabled,
   initialSessionEndSoundsEnabled,
+  initialKeyboardShortcutsEnabled,
   onSave,
   onRealtimeChange,
   wallpapers,
@@ -57,6 +61,9 @@ export default function SettingsModal({
   const [resumeEnabled, setResumeEnabled] = useState<boolean>(initialResumeEnabled);
   const [sessionEndSoundsEnabled, setSessionEndSoundsEnabled] = useState<boolean>(
     initialSessionEndSoundsEnabled
+  );
+  const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = useState<boolean>(
+    initialKeyboardShortcutsEnabled
   );
   const [showInfo, setShowInfo] = useState(false);
 
@@ -88,6 +95,7 @@ export default function SettingsModal({
     setLongMin(initialLongMin);
     setResumeEnabled(initialResumeEnabled);
     setSessionEndSoundsEnabled(initialSessionEndSoundsEnabled);
+    setKeyboardShortcutsEnabled(initialKeyboardShortcutsEnabled);
     setShowInfo(false);
   }, [
     open,
@@ -96,6 +104,7 @@ export default function SettingsModal({
     initialLongMin,
     initialResumeEnabled,
     initialSessionEndSoundsEnabled,
+    initialKeyboardShortcutsEnabled,
   ]);
   const close = (reason?: string) => onClose(reason ?? "close");
   const clamp = (n: number, min = 1, max = 180) =>
@@ -106,6 +115,7 @@ export default function SettingsModal({
     longMin: clamp(longMin),
     resumeEnabled,
     sessionEndSoundsEnabled,
+    keyboardShortcutsEnabled,
   });
 
   const handleSave = () => {
@@ -125,6 +135,7 @@ export default function SettingsModal({
     longMin,
     resumeEnabled,
     sessionEndSoundsEnabled,
+    keyboardShortcutsEnabled,
   ]);
 
   if (!shouldRender) return null;
@@ -261,6 +272,22 @@ export default function SettingsModal({
               onClick={() => setSessionEndSoundsEnabled((prev) => !prev)}
               className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${
                 sessionEndSoundsEnabled
+                  ? "border-white/80 bg-white text-black"
+                  : "border-white/50 bg-white/10 text-transparent"
+              }`}
+            >
+              <Check className="h-4 w-4" />
+            </button>
+          </label>
+          <label className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-3">
+            <span className="text-sm text-white/90">Enable keyboard shortcuts</span>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={keyboardShortcutsEnabled}
+              onClick={() => setKeyboardShortcutsEnabled((prev) => !prev)}
+              className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${
+                keyboardShortcutsEnabled
                   ? "border-white/80 bg-white text-black"
                   : "border-white/50 bg-white/10 text-transparent"
               }`}
